@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+//! Testing of methods and `impl`-blocks.
+
 use contracts::{invariant, pre};
 
 #[test]
@@ -46,7 +48,7 @@ fn impl_invariant() {
         count: usize,
     }
 
-    #[invariant(is_even(self.count))]
+    #[invariant(is_even(self.count), "Count has to always be even")]
     impl EvenAdder {
         const fn step() -> usize {
             2
