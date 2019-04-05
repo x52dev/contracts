@@ -3,7 +3,7 @@ stages:
   - test
 
 fmt-check:
-stage: fmt-check
+  stage: fmt-check
   image: rust:latest
   before_script: 
     - rustup component add rustfmt
