@@ -1,0 +1,19 @@
+[package]
+name = "contracts"
+version = "0.1.0"
+authors = ["karroffel <therzog@mail.de>"]
+edition = "2018"
+
+[lib]
+name = "contracts"
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn = { version = "0.15.30", features = ["extra-traits", "full"] }
+quote = "0.6.11"
+proc-macro2 = "*"
+
+[dev-dependencies]
+quickcheck = "0.8.2"
+quickcheck_macros = "0.8.0"
