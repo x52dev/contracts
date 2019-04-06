@@ -3,6 +3,20 @@ name = "contracts"
 version = "0.1.0"
 authors = ["karroffel <therzog@mail.de>"]
 edition = "2018"
+repository = "https://gitlab.com/karroffel/contracts"
+license = "MPL-2.0"
+readme = "README.md"
+categories = [
+    "design-by-contract",
+    "contract-programming",
+    "contracts",
+    "precondition",
+    "postcondition",
+]
+documentation = "https://docs.rs/contracts"
+
+[badges]
+gitlab = { repository = "karroffel/contracts", branch = "master" }
 
 [lib]
 name = "contracts"

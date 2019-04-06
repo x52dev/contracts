@@ -59,13 +59,14 @@ use syn::{
 pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let (conds, desc) = parse_attributes(attr);
 
-    let desc = if let Some(desc) = desc {
-        format!("Pre-condition violated - {:?}", desc)
-    } else {
-        "Pre-condition violated".to_string()
-    };
-
     let item: ItemFn = syn::parse_macro_input!(toks as ItemFn);
+    let fn_name = item.ident.to_string();
+
+    let desc = if let Some(desc) = desc {
+        format!("Pre-condition of {} violated - {:?}", fn_name, desc)
+    } else {
+        format!("Pre-condition of {} violated", fn_name)
+    };
 
     let pre = attributes_to_asserts(conds, desc);
     let post = quote::quote! {};
@@ -90,13 +91,14 @@ pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let (conds, desc) = parse_attributes(attr);
 
-    let desc = if let Some(desc) = desc {
-        format!("Post-condition violated - {:?}", desc)
-    } else {
-        "Post-condition violated".to_string()
-    };
-
     let item: ItemFn = syn::parse_macro_input!(toks as ItemFn);
+    let fn_name = item.ident.to_string();
+
+    let desc = if let Some(desc) = desc {
+        format!("Post-condition of {} violated - {:?}", fn_name, desc)
+    } else {
+        format!("Post-condition of {} violated", fn_name)
+    };
 
     let pre = quote::quote! {};
     let post = attributes_to_asserts(conds, desc);
@@ -151,10 +153,12 @@ pub fn invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
         Item::Fn(fn_) => {
             let (conds, desc) = parse_attributes(attr);
 
+            let fn_name = fn_.ident.to_string();
+
             let desc = if let Some(desc) = desc {
-                format!("Invariant violated - {:?}", desc)
+                format!("Invariant of {} violated - {:?}", fn_name, desc)
             } else {
-                "Invariant violated".to_string()
+                format!("Invariant of {} violated", fn_name)
             };
 
             let pre = attributes_to_asserts(conds, desc);
