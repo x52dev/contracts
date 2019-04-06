@@ -9,7 +9,6 @@ readme = "README.md"
 categories = [
     "design-by-contract",
     "contract-programming",
-    "contracts",
     "precondition",
     "postcondition",
     "invariant",
