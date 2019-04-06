@@ -12,6 +12,7 @@ categories = [
     "contracts",
     "precondition",
     "postcondition",
+    "invariant",
 ]
 documentation = "https://docs.rs/contracts"
 
