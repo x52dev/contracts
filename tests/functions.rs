@@ -2,21 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+//! Testing of simple functions.
+
 use contracts::{invariant, post, pre};
 use quickcheck_macros::quickcheck;
 
 #[test]
 fn test_a_thing() {
-    #[pre(x > 10)]
-    #[post(ret >= x)]
+    #[pre(x > 10, x < 20, "x must be in valid range")]
+    #[post(ret > x, "result will be bigger than input")]
     fn a(x: usize) -> usize {
-        println!("hello");
         x + 1
     }
 
-    a(11);
-
-    println!("Hi");
+    a(15);
 }
 
 #[quickcheck]
