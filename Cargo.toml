@@ -14,6 +14,7 @@ categories = [
     "invariant",
 ]
 documentation = "https://docs.rs/contracts"
+description = "Design-by-contract attributes"
 
 [badges]
 gitlab = { repository = "karroffel/contracts", branch = "master" }
