@@ -4,7 +4,7 @@
 ![Build status][build]
 ![Lines of Code][loc]
 
-[license]: https://img.shields.io/badge/license-MPL%202.0-blue.svg?style=flat-square
+[license]: https://img.shields.io/badge/license-MPL%202.0-blue.svg
 [build]: https://gitlab.com/karroffel/contracts/badges/master/build.svg
 [loc]: https://tokei.rs/b1/gitlab/karroffel/contracts?category=code
 
