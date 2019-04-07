@@ -51,17 +51,17 @@ impl Range {
 
 ## Set-up
 
-At the moment, `contracts` is not on crates.io, so it has to be added as a git-dependency.
+To install the latest version, add `contracts` to the dependency section of the `Cargo.toml` file.
 
 ```
 [dependencies]
-contracts = { git = "https://gitlab.com/karroffel/contracts" }
+contracts = "0.1.0"
 ```
 
-To bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan
+To then bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan
 to use the contract attributes.
 
-Alternative use the "old-style" of importing macros to have them available in project-wide.
+Alternatively use the "old-style" of importing macros to have them available in project-wide.
 
 ```rust
 #[macro_use]
@@ -70,6 +70,7 @@ extern crate contracts;
 
 ## TODOs
 
+ - implement support for trait functions.
  - add `test_pre`/`test_post`/`test_invariant` attributes which are only used in test configurations.
    This is useful to test implementations for "slow but obviously correct" alternative implementations.
  - add `debug_pre`/`debug_post`/`debug_invariant` attributes which use `debug_assert!` instead of `assert!`

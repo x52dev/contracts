@@ -8,7 +8,7 @@
 //!
 //! The main use of this crate is to annotate functions and methods using
 //! "contracts" in the form of [*pre-conditions*][precond],
-//! [*postconditions*][postcond] and [*invariants*][invariant].
+//! [*post-conditions*][postcond] and [*invariants*][invariant].
 //!
 //! Each "contract" annotation that is violated will cause an assertion failure.
 //!
@@ -30,7 +30,7 @@
 //! [dbc]: https://en.wikipedia.org/wiki/Design_by_contract
 //! [`libhoare`]: https://github.com/nrc/libhoare
 //! [precond]: attr.pre.html
-//! [postcond]: attr.pre.html
+//! [postcond]: attr.post.html
 //! [invariant]: attr.invariant.html
 
 extern crate proc_macro;
