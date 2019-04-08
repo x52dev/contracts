@@ -1,6 +1,6 @@
 [package]
 name = "contracts"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["karroffel <therzog@mail.de>"]
 edition = "2018"
 repository = "https://gitlab.com/karroffel/contracts"
@@ -24,6 +24,11 @@ name = "contracts"
 path = "src/lib.rs"
 proc-macro = true
 
+[features]
+disable_contracts = []
+override_debug = []
+override_log = []
+
 [dependencies]
 syn = { version = "0.15.30", features = ["extra-traits", "full"] }
 quote = "0.6.11"
@@ -32,3 +37,4 @@ proc-macro2 = "0.4.27"
 [dev-dependencies]
 quickcheck = "0.8.2"
 quickcheck_macros = "0.8.0"
+log = "0.4.6"

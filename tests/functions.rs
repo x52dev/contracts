@@ -4,7 +4,7 @@
 
 //! Testing of simple functions.
 
-use contracts::{invariant, post, pre};
+use contracts::*;
 use quickcheck_macros::quickcheck;
 
 #[test]
@@ -35,7 +35,7 @@ fn test_sort(input: Vec<usize>) {
     }
 
     #[post(ret.len() == input.len())]
-    #[post(is_sorted(&ret))]
+    #[test_post(is_sorted(&ret))]
     fn sort(input: &[usize]) -> Vec<usize> {
         let mut vec = input.to_owned();
 

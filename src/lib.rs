@@ -17,6 +17,8 @@
 //! If the last argument to an attribute is a string constant it will be inserted
 //! into the assertion message.
 //!
+//! ## Example
+//!
 //! ```rust
 //! # use contracts::*;
 //! #[pre(x > 0, "x must be in the valid input range")]
@@ -27,11 +29,21 @@
 //! }
 //! ```
 //!
+//! ## Feature flags
+//!
+//! Following feature flags are available:
+//!  - `disable_contracts` - disables all checks and assertions.
+//!  - `override_debug` - changes all contracts (except `test_` ones) into `debug_*` versions
+//!  - `override_log` - changes all contracts (except `test_` ones) into a `log::error!()` call if the condition is violated.
+//!    No abortion happens.
+//!
 //! [dbc]: https://en.wikipedia.org/wiki/Design_by_contract
 //! [`libhoare`]: https://github.com/nrc/libhoare
 //! [precond]: attr.pre.html
 //! [postcond]: attr.post.html
 //! [invariant]: attr.invariant.html
+
+#![warn(missing_docs)]
 
 extern crate proc_macro;
 
@@ -42,6 +54,57 @@ use syn::Token;
 use syn::{
     Block, Expr, ExprLit, FnArg, ImplItem, ImplItemMethod, Item, ItemFn, ItemImpl, Lit, ReturnType,
 };
+
+/// Checking-mode of a contract.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+enum ContractMode {
+    /// Always check contract
+    Always,
+    /// Never check contract
+    Disabled,
+    /// Check contract only in debug builds
+    Debug,
+    /// Check contract only in `#[cfg(test)]` configurations
+    Test,
+    /// Check the contract and print information upon violation, but don't abort the program.
+    LogOnly,
+}
+
+impl ContractMode {
+    /// Return the prefix of attributes of `self` mode.
+    fn name(self) -> Option<&'static str> {
+        match self {
+            ContractMode::Always => Some(""),
+            ContractMode::Disabled => None,
+            ContractMode::Debug => Some("debug_"),
+            ContractMode::Test => Some("test_"),
+            ContractMode::LogOnly => Some("__internal_log_"),
+        }
+    }
+}
+
+/// Computes the contract type based on feature flags.
+fn final_mode(mode: ContractMode) -> ContractMode {
+    // disabled ones can't be "forced", test ones should stay test, no matter what.
+    if mode == ContractMode::Disabled || mode == ContractMode::Test {
+        return mode;
+    }
+
+    if cfg!(feature = "disable_contracts") {
+        ContractMode::Disabled
+    } else if cfg!(feature = "override_debug") {
+        // log is "weaker" than debug, so keep log
+        if mode == ContractMode::LogOnly {
+            mode
+        } else {
+            ContractMode::Debug
+        }
+    } else if cfg!(feature = "override_log") {
+        ContractMode::LogOnly
+    } else {
+        mode
+    }
+}
 
 /// Pre-conditions are checked before the function body is run.
 ///
@@ -57,6 +120,36 @@ use syn::{
 /// ```
 #[proc_macro_attribute]
 pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Always);
+    impl_pre(mode, attr, toks)
+}
+
+/// Same as [`pre`], but uses `debug_assert!`.
+///
+/// [`pre`]: attr.pre.html
+#[proc_macro_attribute]
+pub fn debug_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Debug);
+    impl_pre(mode, attr, toks)
+}
+
+/// Same as [`pre`], but is only enabled in `#[cfg(test)]` environments.
+///
+/// [`pre`]: attr.pre.html
+#[proc_macro_attribute]
+pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Test);
+    impl_pre(mode, attr, toks)
+}
+
+#[doc(hidden)]
+#[proc_macro_attribute]
+pub fn __internal_log_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::LogOnly);
+    impl_pre(mode, attr, toks)
+}
+
+fn impl_pre(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
     let (conds, desc) = parse_attributes(attr);
 
     let item: ItemFn = syn::parse_macro_input!(toks as ItemFn);
@@ -68,7 +161,7 @@ pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
         format!("Pre-condition of {} violated", fn_name)
     };
 
-    let pre = attributes_to_asserts(conds, desc);
+    let pre = attributes_to_asserts(mode, conds, desc);
     let post = quote::quote! {};
 
     impl_fn_checks(item, pre, post)
@@ -89,6 +182,36 @@ pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Always);
+    impl_post(mode, attr, toks)
+}
+
+/// Same as [`post`], but uses `debug_assert!`.
+///
+/// [`post`]: attr.post.html
+#[proc_macro_attribute]
+pub fn debug_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Debug);
+    impl_post(mode, attr, toks)
+}
+
+/// Same as [`post`], but is only enabled in `#[cfg(test)]` environments.
+///
+/// [`post`]: attr.post.html
+#[proc_macro_attribute]
+pub fn test_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Test);
+    impl_post(mode, attr, toks)
+}
+
+#[doc(hidden)]
+#[proc_macro_attribute]
+pub fn __internal_log_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::LogOnly);
+    impl_post(mode, attr, toks)
+}
+
+fn impl_post(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
     let (conds, desc) = parse_attributes(attr);
 
     let item: ItemFn = syn::parse_macro_input!(toks as ItemFn);
@@ -101,7 +224,7 @@ pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
     };
 
     let pre = quote::quote! {};
-    let post = attributes_to_asserts(conds, desc);
+    let post = attributes_to_asserts(mode, conds, desc);
 
     impl_fn_checks(item, pre, post)
 }
@@ -147,28 +270,65 @@ pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Always);
+    impl_invariant(mode, attr, toks)
+}
+
+/// Same as [`invariant`], but uses `debug_assert!`.
+///
+/// [`invariant`]: attr.invariant.html
+#[proc_macro_attribute]
+pub fn debug_invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Debug);
+    impl_invariant(mode, attr, toks)
+}
+
+/// Same as [`invariant`], but is only enabled in `#[cfg(test)]` environments.
+///
+/// [`invariant`]: attr.invariant.html
+#[proc_macro_attribute]
+pub fn test_invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::Test);
+    impl_invariant(mode, attr, toks)
+}
+
+#[doc(hidden)]
+#[proc_macro_attribute]
+pub fn __impl_log_invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let mode = final_mode(ContractMode::LogOnly);
+    impl_invariant(mode, attr, toks)
+}
+
+fn impl_invariant(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
     let item: Item = syn::parse_macro_input!(toks as Item);
 
+    let name = mode.name().unwrap().to_string() + "invariant";
+
     match item {
-        Item::Fn(fn_) => {
-            let (conds, desc) = parse_attributes(attr);
-
-            let fn_name = fn_.ident.to_string();
-
-            let desc = if let Some(desc) = desc {
-                format!("Invariant of {} violated - {:?}", fn_name, desc)
-            } else {
-                format!("Invariant of {} violated", fn_name)
-            };
-
-            let pre = attributes_to_asserts(conds, desc);
-            let post = pre.clone();
-
-            impl_fn_checks(fn_, pre, post)
-        }
-        Item::Impl(impl_) => impl_impl_invariant(attr, impl_),
-        _ => unimplemented!("The #[invariant] attribute only works on functions impl-blocks."),
+        Item::Fn(fn_) => impl_invariant_fn(mode, attr, fn_),
+        Item::Impl(impl_) => impl_impl_invariant(mode, attr, impl_),
+        _ => unimplemented!(
+            "The #[{}] attribute only works on functions and impl-blocks.",
+            name
+        ),
     }
+}
+
+fn impl_invariant_fn(mode: ContractMode, attr: TokenStream, fn_: ItemFn) -> TokenStream {
+    let (conds, desc) = parse_attributes(attr);
+
+    let fn_name = fn_.ident.to_string();
+
+    let desc = if let Some(desc) = desc {
+        format!("Invariant of {} violated - {:?}", fn_name, desc)
+    } else {
+        format!("Invariant of {} violated", fn_name)
+    };
+
+    let pre = attributes_to_asserts(mode, conds, desc);
+    let post = pre.clone();
+
+    impl_fn_checks(fn_, pre, post)
 }
 
 /// Parse attributes into a list of expression and an optional description of the assert
@@ -215,13 +375,56 @@ fn parse_attributes(attrs: TokenStream) -> (Vec<Expr>, Option<String>) {
 }
 
 /// Create the token-stream for assert statements.
-fn attributes_to_asserts(exprs: Vec<Expr>, desc: String) -> proc_macro2::TokenStream {
+fn attributes_to_asserts(
+    mode: ContractMode,
+    exprs: Vec<Expr>,
+    desc: String,
+) -> proc_macro2::TokenStream {
     let mut stream = proc_macro2::TokenStream::new();
 
+    let generate = |expr: &Expr, desc: &str| {
+        let format_args = quote::quote! {
+            concat!(concat!(#desc, ": "), stringify!(#expr))
+        };
+
+        match mode {
+            ContractMode::Always => {
+                quote::quote! {
+                    assert!(#expr, #format_args);
+                }
+            }
+            ContractMode::Disabled => {
+                quote::quote! {}
+            }
+            ContractMode::Debug => {
+                quote::quote! {
+                    debug_assert!(#expr, #format_args);
+                }
+            }
+            ContractMode::Test => {
+                quote::quote! {
+                    if cfg!(test) {
+                        assert!(#expr, #format_args);
+                    }
+                }
+            }
+            ContractMode::LogOnly => {
+                quote::quote! {
+                    if !(#expr) {
+                        log::error!(#format_args);
+                    }
+                }
+            }
+        }
+    };
+
     for expr in exprs {
+        stream.extend(generate(&expr, &desc));
+        /*
         stream.extend(quote::quote! {
             assert!(#expr, concat!(concat!(#desc, ": "), stringify!(#expr)));
         });
+        */
     }
 
     stream
@@ -270,11 +473,24 @@ fn impl_fn_checks(
 }
 
 /// Generate the token-stream for an `impl` block with a "global" invariant.
-fn impl_impl_invariant(invariant: TokenStream, mut impl_def: ItemImpl) -> TokenStream {
+fn impl_impl_invariant(
+    mode: ContractMode,
+    invariant: TokenStream,
+    mut impl_def: ItemImpl,
+) -> TokenStream {
     // all that is done is prefix all the function definitions with
     // the invariant attribute.
     // The following expansion of the attributes will then implement the invariant
     // just like it's done for functions.
+
+    let name = match mode.name() {
+        Some(n) => n.to_string() + "invariant",
+        None => {
+            return quote::quote!( #impl_def ).into();
+        }
+    };
+
+    let invariant_ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
 
     let invariant: proc_macro2::TokenStream = invariant.into();
 
@@ -299,7 +515,7 @@ fn impl_impl_invariant(invariant: TokenStream, mut impl_def: ItemImpl) -> TokenS
             }
 
             let method_toks = quote::quote! {
-                #[invariant(#invariant)]
+                #[#invariant_ident(#invariant)]
                 #method
             }
             .into();

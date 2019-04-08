@@ -49,13 +49,29 @@ impl Range {
 
 [rit]: tests/ranged_int.rs
 
+## Modes
+
+All the attributes (pre, post, invariant) have `debug_*` and `test_*` versions.
+
+- `debug_pre`/`debug_post`/`debug_invariant` use `debug_assert!` internally rather than `assert!`
+- `test_pre`/`test_post`/`test_invariant` guard the `assert!` with an `if cfg!(test)`.
+  This should mostly be used for stating equivalence to "slow but obviously correct" alternative implementations or checks.
+  
+  For example, a merge-sort implementation might look like this
+  ```rust
+  #[post(is_sorted(input))]
+  fn merge_sort<T: Ord + Copy>(input: &mut [T]) {
+      // ...
+  }
+  ```
+
 ## Set-up
 
 To install the latest version, add `contracts` to the dependency section of the `Cargo.toml` file.
 
 ```
 [dependencies]
-contracts = "0.1.0"
+contracts = "0.1.1"
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan
@@ -68,10 +84,17 @@ Alternatively use the "old-style" of importing macros to have them available in 
 extern crate contracts;
 ```
 
+## Configuration
+
+This crate exposes a number of feature flags to configure the assertion behavior.
+
+ - `disable_contracts` - disables all checks and assertions.
+ - `override_debug` - changes all contracts (except `test_` ones) into `debug_*` versions
+ - `override_log` - changes all contracts (except `test_` ones) into a `log::error!()` call if the condition is violated.
+   No abortion happens.
+
+
 ## TODOs
 
  - implement support for trait functions.
- - add `test_pre`/`test_post`/`test_invariant` attributes which are only used in test configurations.
-   This is useful to test implementations for "slow but obviously correct" alternative implementations.
- - add `debug_pre`/`debug_post`/`debug_invariant` attributes which use `debug_assert!` instead of `assert!`
  - add a static analyzer à la SPARK for whole-projects using the contracts to make static assertions.
