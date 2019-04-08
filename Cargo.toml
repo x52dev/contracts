@@ -37,4 +37,3 @@ proc-macro2 = "0.4.27"
 [dev-dependencies]
 quickcheck = "0.8.2"
 quickcheck_macros = "0.8.0"
-log = "0.4.6"

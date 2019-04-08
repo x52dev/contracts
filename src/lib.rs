@@ -43,8 +43,6 @@
 //! [postcond]: attr.post.html
 //! [invariant]: attr.invariant.html
 
-#![warn(missing_docs)]
-
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
