@@ -71,7 +71,7 @@ To install the latest version, add `contracts` to the dependency section of the 
 
 ```
 [dependencies]
-contracts = "0.1.1"
+contracts = "0.2.0"
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan
@@ -96,5 +96,5 @@ This crate exposes a number of feature flags to configure the assertion behavior
 
 ## TODOs
 
- - implement support for trait functions.
+ - implement more contracts for traits.
  - add a static analyzer à la SPARK for whole-projects using the contracts to make static assertions.
