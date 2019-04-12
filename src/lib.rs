@@ -82,7 +82,7 @@ impl ContractMode {
             ContractMode::Disabled => None,
             ContractMode::Debug => Some("debug_"),
             ContractMode::Test => Some("test_"),
-            ContractMode::LogOnly => Some("__internal_log_"),
+            ContractMode::LogOnly => None,
         }
     }
 }
