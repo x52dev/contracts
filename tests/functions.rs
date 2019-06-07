@@ -65,3 +65,22 @@ fn test_invariant() {
     add_to_10(&mut val);
     add_to_10(&mut val);
 }
+
+#[test]
+#[should_panic(expected = "Post-condition of abs violated")]
+fn test_early_return() {
+    // make sure that post-conditions are executed even if an early return happened.
+
+    #[post(ret >= 0)]
+    #[post(ret == x || ret == -x)]
+    #[post(ret * ret == x * x)]
+    fn abs(x: isize) -> isize {
+        if x < 0 {
+            // this implementation does not respect the contracts!
+            return 0;
+        }
+        x
+    }
+
+    abs(-4);
+}
