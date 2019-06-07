@@ -1,12 +1,16 @@
 [package]
 name = "contracts"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["karroffel <therzog@mail.de>"]
 edition = "2018"
 repository = "https://gitlab.com/karroffel/contracts"
 license = "MPL-2.0"
 readme = "README.md"
 categories = [
+    "development-tools",
+
+]
+keywords = [
     "design-by-contract",
     "contract-programming",
     "precondition",
