@@ -5,9 +5,7 @@
 use proc_macro::TokenStream;
 use syn::{FnArg, ImplItem, ImplItemMethod, Item, ItemFn, ItemImpl};
 
-use crate::implementation::{
-    attributes_to_asserts, final_mode, generate_fn_checks, parse_attributes, ContractMode,
-};
+use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
 
 pub(crate) fn invariant(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
     let item: Item = syn::parse_macro_input!(toks as Item);
@@ -24,23 +22,12 @@ pub(crate) fn invariant(mode: ContractMode, attr: TokenStream, toks: TokenStream
     }
 }
 
-fn invariant_fn(mode: ContractMode, attr: TokenStream, fn_: ItemFn) -> TokenStream {
-    let mode = final_mode(mode);
+fn invariant_fn(mode: ContractMode, attr: TokenStream, func: ItemFn) -> TokenStream {
+    let ty = ContractType::Invariant;
 
-    let (conds, desc) = parse_attributes(attr);
+    let f = FuncWithContracts::new_with_initial_contract(func, ty, mode, attr);
 
-    let fn_name = fn_.ident.to_string();
-
-    let desc = if let Some(desc) = desc {
-        format!("Invariant of {} violated - {:?}", fn_name, desc)
-    } else {
-        format!("Invariant of {} violated", fn_name)
-    };
-
-    let pre = attributes_to_asserts(mode, conds, desc);
-    let post = pre.clone();
-
-    generate_fn_checks(fn_, pre, post)
+    f.generate()
 }
 
 /// Generate the token-stream for an `impl` block with a "global" invariant.

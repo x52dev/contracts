@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2019-07-17
+### Fixed
+- Errors inside functions/methods are now properly reported with the correct source location.
+### Changed
+- internal handling of contracts is now done in a single proc-macro pass instead of one for each contract.
+
 ## [0.2.1] - 2019-06-07
 ### Fixed
 - Functions/methods with explicit return statements no longer skip `post` conditions

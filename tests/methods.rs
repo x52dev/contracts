@@ -4,7 +4,7 @@
 
 //! Testing of methods and `impl`-blocks.
 
-use contracts::{invariant, pre};
+use contracts::*;
 
 #[test]
 fn methods() {

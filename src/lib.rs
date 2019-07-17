@@ -47,7 +47,7 @@ extern crate proc_macro;
 
 mod implementation;
 
-use implementation::{final_mode, ContractMode};
+use implementation::ContractMode;
 use proc_macro::TokenStream;
 
 /// Pre-conditions are checked before the function body is run.
@@ -64,8 +64,7 @@ use proc_macro::TokenStream;
 /// ```
 #[proc_macro_attribute]
 pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let mode = final_mode(ContractMode::Always);
-    implementation::pre(mode, attr, toks)
+    implementation::pre(ContractMode::Always, attr, toks)
 }
 
 /// Same as [`pre`], but uses `debug_assert!`.
@@ -73,8 +72,7 @@ pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// [`pre`]: attr.pre.html
 #[proc_macro_attribute]
 pub fn debug_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let mode = final_mode(ContractMode::Debug);
-    implementation::pre(mode, attr, toks)
+    implementation::pre(ContractMode::Debug, attr, toks)
 }
 
 /// Same as [`pre`], but is only enabled in `#[cfg(test)]` environments.
@@ -82,8 +80,7 @@ pub fn debug_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// [`pre`]: attr.pre.html
 #[proc_macro_attribute]
 pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let mode = final_mode(ContractMode::Test);
-    implementation::pre(mode, attr, toks)
+    implementation::pre(ContractMode::Test, attr, toks)
 }
 
 /// Post-conditions are checked after the function body is run.
@@ -101,8 +98,7 @@ pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let mode = final_mode(ContractMode::Always);
-    implementation::post(mode, attr, toks)
+    implementation::post(ContractMode::Always, attr, toks)
 }
 
 /// Same as [`post`], but uses `debug_assert!`.
@@ -110,8 +106,7 @@ pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// [`post`]: attr.post.html
 #[proc_macro_attribute]
 pub fn debug_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let mode = final_mode(ContractMode::Debug);
-    implementation::post(mode, attr, toks)
+    implementation::post(ContractMode::Debug, attr, toks)
 }
 
 /// Same as [`post`], but is only enabled in `#[cfg(test)]` environments.
@@ -119,8 +114,7 @@ pub fn debug_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// [`post`]: attr.post.html
 #[proc_macro_attribute]
 pub fn test_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let mode = final_mode(ContractMode::Test);
-    implementation::post(mode, attr, toks)
+    implementation::post(ContractMode::Test, attr, toks)
 }
 
 /// Invariants are conditions that have to be maintained at the "interface boundaries".
