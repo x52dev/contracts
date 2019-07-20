@@ -6,7 +6,11 @@ use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
 use proc_macro::TokenStream;
 use syn::ItemFn;
 
-pub(crate) fn post(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub(crate) fn post(
+    mode: ContractMode,
+    attr: TokenStream,
+    toks: TokenStream,
+) -> TokenStream {
     let ty = ContractType::Post;
 
     let func = syn::parse_macro_input!(toks as ItemFn);

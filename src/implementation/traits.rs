@@ -3,7 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use proc_macro::TokenStream;
-use syn::{FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod};
+use syn::{
+    FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod,
+};
 
 /// Name used for the "re-routed" method.
 fn contract_method_impl_name(name: &str) -> String {
@@ -11,7 +13,10 @@ fn contract_method_impl_name(name: &str) -> String {
 }
 
 /// Modifies a trait item in a way that it includes contracts.
-pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTrait) -> TokenStream {
+pub(crate) fn contract_trait_item_trait(
+    _attrs: TokenStream,
+    mut trait_: ItemTrait,
+) -> TokenStream {
     /// Just rename the method to have an internal, generated name.
     fn create_method_rename(method: &TraitItemMethod) -> TraitItemMethod {
         let mut m: TraitItemMethod = (*method).clone();
@@ -117,7 +122,8 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
         };
 
         {
-            let block: syn::Block = syn::parse_macro_input::parse(body).unwrap();
+            let block: syn::Block =
+                syn::parse_macro_input::parse(body).unwrap();
             m.default = Some(block);
             m.semi_token = None;
         }
@@ -134,7 +140,10 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
                 let rename = create_method_rename(m);
                 let wrapper = create_method_wrapper(m);
 
-                Some(vec![TraitItem::Method(rename), TraitItem::Method(wrapper)])
+                Some(vec![
+                    TraitItem::Method(rename),
+                    TraitItem::Method(wrapper),
+                ])
             } else {
                 None
             }
@@ -166,14 +175,19 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
 }
 
 /// Rename all methods inside an `impl` to use the "internal implementation" name.
-pub(crate) fn contract_trait_item_impl(_attrs: TokenStream, impl_: ItemImpl) -> TokenStream {
+pub(crate) fn contract_trait_item_impl(
+    _attrs: TokenStream,
+    impl_: ItemImpl,
+) -> TokenStream {
     let new_impl = {
         let mut impl_: ItemImpl = impl_.clone();
 
         impl_.items.iter_mut().for_each(|it| {
             if let ImplItem::Method(method) = it {
-                let new_name = contract_method_impl_name(&method.sig.ident.to_string());
-                let new_ident = syn::Ident::new(&new_name, method.sig.ident.span());
+                let new_name =
+                    contract_method_impl_name(&method.sig.ident.to_string());
+                let new_ident =
+                    syn::Ident::new(&new_name, method.sig.ident.span());
 
                 method.sig.ident = new_ident;
             }

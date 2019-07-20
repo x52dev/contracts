@@ -2,17 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+pub(crate) mod codegen;
+pub(crate) mod doc;
 pub(crate) mod invariant;
+pub(crate) mod parse;
 pub(crate) mod post;
 pub(crate) mod pre;
 pub(crate) mod traits;
 
 use proc_macro::TokenStream;
 use quote::ToTokens;
-use syn::parse::Parser;
-use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
-use syn::{Block, Expr, ExprLit, ItemFn, Lit, ReturnType, Token};
+use syn::{Expr, ItemFn};
 
 pub(crate) use invariant::invariant;
 pub(crate) use post::post;
@@ -46,28 +46,28 @@ impl ContractMode {
             ContractMode::LogOnly => None,
         }
     }
-}
 
-/// Computes the contract type based on feature flags.
-pub(crate) fn final_mode(mode: ContractMode) -> ContractMode {
-    // disabled ones can't be "forced", test ones should stay test, no matter what.
-    if mode == ContractMode::Disabled || mode == ContractMode::Test {
-        return mode;
-    }
-
-    if cfg!(feature = "disable_contracts") {
-        ContractMode::Disabled
-    } else if cfg!(feature = "override_debug") {
-        // log is "weaker" than debug, so keep log
-        if mode == ContractMode::LogOnly {
-            mode
-        } else {
-            ContractMode::Debug
+    /// Computes the contract type based on feature flags.
+    pub(crate) fn final_mode(self) -> Self {
+        // disabled ones can't be "forced", test ones should stay test, no matter what.
+        if self == ContractMode::Disabled || self == ContractMode::Test {
+            return self;
         }
-    } else if cfg!(feature = "override_log") {
-        ContractMode::LogOnly
-    } else {
-        mode
+
+        if cfg!(feature = "disable_contracts") {
+            ContractMode::Disabled
+        } else if cfg!(feature = "override_debug") {
+            // log is "weaker" than debug, so keep log
+            if self == ContractMode::LogOnly {
+                self
+            } else {
+                ContractMode::Debug
+            }
+        } else if cfg!(feature = "override_log") {
+            ContractMode::LogOnly
+        } else {
+            self
+        }
     }
 }
 
@@ -90,17 +90,25 @@ impl ContractType {
     }
 
     /// Determine the type and mode of an identifier.
-    pub(crate) fn contract_type_and_mode(ident: &str) -> Option<(ContractType, ContractMode)> {
+    pub(crate) fn contract_type_and_mode(
+        ident: &str,
+    ) -> Option<(ContractType, ContractMode)> {
         match ident {
             "pre" => Some((ContractType::Pre, ContractMode::Always)),
             "post" => Some((ContractType::Post, ContractMode::Always)),
-            "invariant" => Some((ContractType::Invariant, ContractMode::Always)),
+            "invariant" => {
+                Some((ContractType::Invariant, ContractMode::Always))
+            }
             "debug_pre" => Some((ContractType::Pre, ContractMode::Debug)),
             "debug_post" => Some((ContractType::Post, ContractMode::Debug)),
-            "debug_invariant" => Some((ContractType::Invariant, ContractMode::Debug)),
+            "debug_invariant" => {
+                Some((ContractType::Invariant, ContractMode::Debug))
+            }
             "test_pre" => Some((ContractType::Pre, ContractMode::Test)),
             "test_post" => Some((ContractType::Post, ContractMode::Test)),
-            "test_invariant" => Some((ContractType::Invariant, ContractMode::Test)),
+            "test_invariant" => {
+                Some((ContractType::Invariant, ContractMode::Test))
+            }
             _ => None,
         }
     }
@@ -117,8 +125,12 @@ pub(crate) struct Contract {
 }
 
 impl Contract {
-    pub(crate) fn from_toks(ty: ContractType, mode: ContractMode, toks: TokenStream) -> Self {
-        let (assertions, desc) = parse_attributes(toks);
+    pub(crate) fn from_toks(
+        ty: ContractType,
+        mode: ContractMode,
+        toks: TokenStream,
+    ) -> Self {
+        let (assertions, desc) = parse::parse_attributes(toks);
 
         let span = Span::call_site();
 
@@ -162,7 +174,8 @@ impl FuncWithContracts {
             .attrs
             .iter()
             .filter_map(|a| {
-                let name = a.path.segments.last().unwrap().value().ident.to_string();
+                let name =
+                    a.path.segments.last().unwrap().value().ident.to_string();
                 let (ty, mode) = ContractType::contract_type_and_mode(&name)?;
                 Some((ty, mode, a))
             })
@@ -193,7 +206,14 @@ impl FuncWithContracts {
                 .into_iter()
                 .filter(|attr| {
                     ContractType::contract_type_and_mode(
-                        &attr.path.segments.last().unwrap().value().ident.to_string(),
+                        &attr
+                            .path
+                            .segments
+                            .last()
+                            .unwrap()
+                            .value()
+                            .ident
+                            .to_string(),
                     )
                     .is_none()
                 })
@@ -208,196 +228,9 @@ impl FuncWithContracts {
         }
     }
 
-    /// Generate the resulting code for this function by inserting assertions.
-    pub(crate) fn generate(mut self) -> TokenStream {
-        let func_name = self.function.ident.to_string();
-
-        // creates an assertion appropriate for the current mode
-        let make_assertion = |mode: ContractMode, expr: &Expr, desc: &str| {
-            let span = expr.span();
-
-            let format_args = quote::quote_spanned! { span=>
-                concat!(concat!(#desc, ": "), stringify!(#expr))
-            };
-
-            match mode {
-                ContractMode::Always => {
-                    quote::quote_spanned! { span=>
-                        assert!(#expr, #format_args);
-                    }
-                }
-                ContractMode::Disabled => {
-                    quote::quote! {}
-                }
-                ContractMode::Debug => {
-                    quote::quote_spanned! { span=>
-                        debug_assert!(#expr, #format_args);
-                    }
-                }
-                ContractMode::Test => {
-                    quote::quote_spanned! { span=>
-                        #[cfg(test)]
-                        {
-                            assert!(#expr, #format_args);
-                        }
-                    }
-                }
-                ContractMode::LogOnly => {
-                    quote::quote_spanned! { span=>
-                        if !(#expr) {
-                            log::error!(#format_args);
-                        }
-                    }
-                }
-            }
-        };
-
-        //
-        // generate assertion code for pre-conditions
-        //
-
-        let pre: proc_macro2::TokenStream = self
-            .contracts
-            .iter()
-            .filter(|c| c.ty == ContractType::Pre || c.ty == ContractType::Invariant)
-            .flat_map(|c| {
-                let desc = if let Some(desc) = c.desc.as_ref() {
-                    format!(
-                        "{} of {} violated: {}",
-                        c.ty.message_name(),
-                        func_name,
-                        desc
-                    )
-                } else {
-                    format!("{} of {} violated", c.ty.message_name(), func_name)
-                };
-
-                c.assertions.iter().map(move |a| {
-                    let mode = final_mode(c.mode);
-
-                    make_assertion(mode, a, &desc.clone())
-                })
-            })
-            .collect();
-
-        //
-        // generate assertion code for post-conditions
-        //
-
-        let post: proc_macro2::TokenStream = self
-            .contracts
-            .iter()
-            .filter(|c| c.ty == ContractType::Post || c.ty == ContractType::Invariant)
-            .flat_map(|c| {
-                let desc = if let Some(desc) = c.desc.as_ref() {
-                    format!(
-                        "{} of {} violated: {}",
-                        c.ty.message_name(),
-                        func_name,
-                        desc
-                    )
-                } else {
-                    format!("{} of {} violated", c.ty.message_name(), func_name)
-                };
-
-                c.assertions.iter().map(move |a| {
-                    let mode = final_mode(c.mode);
-
-                    make_assertion(mode, a, &desc.clone())
-                })
-            })
-            .collect();
-
-        //
-        // wrap the function body in a closure
-        //
-
-        let block = self.function.block.clone();
-
-        let ret_ty = if let ReturnType::Type(_, ty) = &self.function.decl.output {
-            let span = ty.span();
-            quote::quote_spanned! { span=>
-                #ty
-            }
-        } else {
-            quote::quote! { () }
-        };
-
-        let body = quote::quote! {
-            #[allow(unused_mut)]
-            let mut run = || -> #ret_ty {
-                #block
-            };
-
-            let ret = run();
-        };
-
-        //
-        // create a new function body containing all assertions
-        //
-
-        let new_block = quote::quote! {
-
-            {
-                #pre
-
-                #body
-
-                #post
-
-                ret
-            }
-
-        }
-        .into();
-
-        // replace the old function body with the new one
-
-        self.function.block = Box::new(syn::parse_macro_input!(new_block as Block));
-
-        let res = self.function.into_token_stream();
-
-        res.into()
+    /// Generates the resulting tokens including all contract-checks
+    pub(crate) fn generate(self) -> TokenStream {
+        let doc_attrs = doc::generate_attributes(&self.contracts);
+        codegen::generate(self, doc_attrs)
     }
-}
-
-/// Parse attributes into a list of expression and an optional description of the assert
-fn parse_attributes(attrs: TokenStream) -> (Vec<Expr>, Option<String>) {
-    let mut conds: Punctuated<Expr, Token![,]> = {
-        let tokens = attrs;
-
-        let parser = Punctuated::<Expr, Token![,]>::parse_separated_nonempty;
-
-        let terminated = parser.parse(tokens.clone());
-
-        if let Ok(res) = terminated {
-            res
-        } else {
-            let parser = Punctuated::<Expr, Token![,]>::parse_terminated;
-
-            parser.parse(tokens).unwrap()
-        }
-    };
-
-    let desc = conds
-        .last()
-        .map(|x| {
-            let expr = *x.value();
-
-            match expr {
-                Expr::Lit(ExprLit {
-                    lit: Lit::Str(str), ..
-                }) => Some(str.value()),
-                _ => None,
-            }
-        })
-        .unwrap_or(None);
-
-    if desc.is_some() {
-        conds.pop();
-    }
-
-    let exprs = conds.into_iter().map(|e| e).collect();
-
-    (exprs, desc)
 }
