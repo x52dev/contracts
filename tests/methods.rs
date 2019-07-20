@@ -18,12 +18,14 @@ fn methods() {
 
     impl EvenAdder {
         #[invariant(is_even(self.count))]
+        #[post(self.count == old(self.count) + 2)]
         fn next_even(&mut self) {
             self.count += 2;
         }
 
         #[invariant(is_even(self.count))]
         #[pre(self.count >= 2)]
+        #[post(self.count == old(self.count) - 2)]
         fn prev_even(&mut self) {
             self.count -= 2;
         }
@@ -58,11 +60,13 @@ fn impl_invariant() {
             EvenAdder { count: 0 }
         }
 
+        #[post(self.count == old(self.count) + 2)]
         fn next_even(&mut self) {
             self.count += Self::step();
         }
 
         #[pre(self.count >= 2)]
+        #[post(self.count == old(self.count) - 2)]
         fn prev_even(&mut self) {
             self.count -= Self::step();
         }

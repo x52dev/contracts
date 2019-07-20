@@ -87,13 +87,27 @@ pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 ///
 /// The result of the function call is accessible in conditions using the `ret` identifier.
 ///
-/// ## Example
+/// A "pseudo-function" named `old` can be used to evaluate expressions in a context
+/// *prior* to function execution.
+/// This function takes only a single argument and the result of it will be stored
+/// in a variable before the function is called. Because of this, handling references
+/// might require special care.
+///
+/// ## Examples
 ///
 /// ```rust
 /// # use contracts::*;
 /// #[post(ret > x)]
 /// fn incr(x: usize) -> usize {
 ///     x + 1
+/// }
+/// ```
+///
+/// ```rust
+/// # use contracts::*;
+/// #[post(*x == old(*x) + 1, "x is incremented")]
+/// fn incr(x: &mut usize) {
+///     *x += 1;
 /// }
 /// ```
 #[proc_macro_attribute]
