@@ -59,7 +59,7 @@ All the attributes (pre, post, invariant) have `debug_*` and `test_*` versions.
   
   For example, a merge-sort implementation might look like this
   ```rust
-  #[post(is_sorted(input))]
+  #[test_post(is_sorted(input))]
   fn merge_sort<T: Ord + Copy>(input: &mut [T]) {
       // ...
   }
@@ -71,7 +71,7 @@ To install the latest version, add `contracts` to the dependency section of the 
 
 ```
 [dependencies]
-contracts = "0.2.2"
+contracts = "0.3.0"
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan

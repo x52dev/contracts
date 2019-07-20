@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2019-07-20
+## Added
+- Pseudo-function `old(expr)` which in a post-condition evaluates the expression before function execution.
+- Automatic generation of documentation containing all contracts.
+
 ## [0.2.2] - 2019-07-17
 ### Fixed
 - Errors inside functions/methods are now properly reported with the correct source location.

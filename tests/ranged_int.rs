@@ -67,6 +67,7 @@ impl Add<Self> for RangedInt {
 
     #[pre(self.range.merge(rhs.range).contains(self.value + rhs.value))]
     #[post(ret.range.contains(ret.value))]
+    #[post(ret.value == self.value + rhs.value)]
     fn add(self, rhs: Self) -> Self::Output {
         let mut new_ranged = self.extend(rhs.range);
 
