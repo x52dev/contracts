@@ -2,15 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use crate::implementation::{
-    Contract, ContractMode, ContractType, FuncWithContracts,
-};
-
 use proc_macro::TokenStream;
+
+use proc_macro2::{Ident, Span};
 use quote::ToTokens;
 use syn::{
     spanned::Spanned, visit_mut as visitor, Attribute, Block, Expr, ExprCall,
     ReturnType,
+};
+
+use crate::implementation::{
+    Contract, ContractMode, ContractType, FuncWithContracts,
 };
 
 /// Substitution for `old()` expressions.
@@ -111,6 +113,58 @@ pub(crate) fn extract_old_calls(contracts: &mut [Contract]) -> Vec<OldExpr> {
     extractor.olds
 }
 
+fn get_assert_macro(
+    ctype: ContractType, // only Pre/Post allowed.
+    mode: ContractMode,
+    span: Span,
+) -> Option<Ident> {
+    if cfg!(feature = "mirai_assertions") {
+        match (ctype, mode) {
+            (ContractType::Pre, ContractMode::Always) => {
+                Some(Ident::new("checked_precondition", span))
+            }
+            (ContractType::Pre, ContractMode::Debug) => {
+                Some(Ident::new("debug_checked_precondition", span))
+            }
+            (ContractType::Pre, ContractMode::Test) => {
+                Some(Ident::new("debug_checked_precondition", span))
+            }
+            (ContractType::Pre, ContractMode::Disabled) => {
+                Some(Ident::new("precondition", span))
+            }
+            (ContractType::Pre, ContractMode::LogOnly) => {
+                Some(Ident::new("precondition", span))
+            }
+            (ContractType::Post, ContractMode::Always) => {
+                Some(Ident::new("checked_postcondition", span))
+            }
+            (ContractType::Post, ContractMode::Debug) => {
+                Some(Ident::new("debug_checked_postcondition", span))
+            }
+            (ContractType::Post, ContractMode::Test) => {
+                Some(Ident::new("debug_checked_postcondition", span))
+            }
+            (ContractType::Post, ContractMode::Disabled) => {
+                Some(Ident::new("postcondition", span))
+            }
+            (ContractType::Post, ContractMode::LogOnly) => {
+                Some(Ident::new("postcondition", span))
+            }
+            (ContractType::Invariant, _) => {
+                panic!("expected Invariant to be narrowed down to Pre/Post")
+            }
+        }
+    } else {
+        match mode {
+            ContractMode::Always => Some(Ident::new("assert", span)),
+            ContractMode::Debug => Some(Ident::new("debug_assert", span)),
+            ContractMode::Test => Some(Ident::new("debug_assert", span)),
+            ContractMode::Disabled => None,
+            ContractMode::LogOnly => None,
+        }
+    }
+}
+
 /// Generate the resulting code for this function by inserting assertions.
 pub(crate) fn generate(
     mut func: FuncWithContracts,
@@ -121,44 +175,45 @@ pub(crate) fn generate(
 
     // creates an assertion appropriate for the current mode
     let make_assertion = |mode: ContractMode,
+                          ctype: ContractType,
                           display_expr: &Expr,
                           exec_expr: &Expr,
                           desc: &str| {
         let span = display_expr.span();
+        let mut result = proc_macro2::TokenStream::new();
 
         let format_args = quote::quote_spanned! { span=>
             concat!(concat!(#desc, ": "), stringify!(#display_expr))
         };
 
-        match mode {
-            ContractMode::Always => {
-                quote::quote_spanned! { span=>
-                    assert!(#exec_expr, #format_args);
-                }
-            }
-            ContractMode::Disabled => {
-                quote::quote! {}
-            }
-            ContractMode::Debug => {
-                quote::quote_spanned! { span=>
-                    debug_assert!(#exec_expr, #format_args);
-                }
-            }
-            ContractMode::Test => {
-                quote::quote_spanned! { span=>
-                    #[cfg(test)]
-                    {
-                        assert!(#exec_expr, #format_args);
-                    }
-                }
-            }
-            ContractMode::LogOnly => {
+        if mode == ContractMode::LogOnly {
+            result.extend(
                 quote::quote_spanned! { span=>
                     if !(#exec_expr) {
                         log::error!(#format_args);
                     }
                 }
+                .into_iter(),
+            );
+        }
+
+        if let Some(assert_macro) = get_assert_macro(ctype, mode, span) {
+            result.extend(
+                quote::quote_spanned! { span=>
+                    #assert_macro!(#exec_expr, #format_args);
+                }
+                .into_iter(),
+            );
+        }
+
+        if mode == ContractMode::Test {
+            quote::quote_spanned! { span=>
+              #[cfg(test)] {
+                #result
+              }
             }
+        } else {
+            result
         }
     };
 
@@ -188,7 +243,13 @@ pub(crate) fn generate(
                 move |(expr, display_expr)| {
                     let mode = c.mode.final_mode();
 
-                    make_assertion(mode, display_expr, expr, &desc.clone())
+                    make_assertion(
+                        mode,
+                        ContractType::Pre,
+                        display_expr,
+                        expr,
+                        &desc.clone(),
+                    )
                 },
             )
         })
@@ -220,7 +281,13 @@ pub(crate) fn generate(
                 move |(expr, display_expr)| {
                     let mode = c.mode.final_mode();
 
-                    make_assertion(mode, display_expr, expr, &desc.clone())
+                    make_assertion(
+                        mode,
+                        ContractType::Post,
+                        display_expr,
+                        expr,
+                        &desc.clone(),
+                    )
                 },
             )
         })

@@ -7,6 +7,9 @@
 use contracts::*;
 use std::ops::{Add, Deref};
 
+#[cfg(feature = "mirai_assertions")]
+mod mirai_assertion_mocks;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Range {
     min: usize,
