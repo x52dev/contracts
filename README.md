@@ -92,7 +92,11 @@ This crate exposes a number of feature flags to configure the assertion behavior
  - `override_debug` - changes all contracts (except `test_` ones) into `debug_*` versions
  - `override_log` - changes all contracts (except `test_` ones) into a `log::error!()` call if the condition is violated.
    No abortion happens.
+ - `mirai_assertions` - instead of regular assert! style macros, emit macros used by the 
+   [MIRAI] static analyzer. For more documentation of this usage, 
+   head to the [MIRAI] repo.
 
+[MIRAI]: https://github.com/facebookexperimental/MIRAI
 
 ## TODOs
 
