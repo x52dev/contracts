@@ -10,14 +10,13 @@ pub(crate) mod post;
 pub(crate) mod pre;
 pub(crate) mod traits;
 
-use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::{Expr, ItemFn};
 
 pub(crate) use invariant::invariant;
 pub(crate) use post::post;
 pub(crate) use pre::pre;
-use proc_macro2::{Span, TokenTree};
+use proc_macro2::{Span, TokenStream, TokenTree};
 pub(crate) use traits::{contract_trait_item_impl, contract_trait_item_trait};
 
 /// Checking-mode of a contract.
@@ -31,7 +30,8 @@ pub(crate) enum ContractMode {
     Debug,
     /// Check contract only in `#[cfg(test)]` configurations
     Test,
-    /// Check the contract and print information upon violation, but don't abort the program.
+    /// Check the contract and print information upon violation, but don't abort
+    /// the program.
     LogOnly,
 }
 
@@ -49,7 +49,8 @@ impl ContractMode {
 
     /// Computes the contract type based on feature flags.
     pub(crate) fn final_mode(self) -> Self {
-        // disabled ones can't be "forced", test ones should stay test, no matter what.
+        // disabled ones can't be "forced", test ones should stay test, no
+        // matter what.
         if self == ContractMode::Disabled || self == ContractMode::Test {
             return self;
         }
@@ -80,7 +81,8 @@ pub(crate) enum ContractType {
 }
 
 impl ContractType {
-    /// Get the name that is used as a message-prefix on violation of a contract.
+    /// Get the name that is used as a message-prefix on violation of a
+    /// contract.
     pub(crate) fn message_name(self) -> &'static str {
         match self {
             ContractType::Pre => "Pre-condition",
@@ -121,7 +123,7 @@ pub(crate) struct Contract {
     pub(crate) ty: ContractType,
     pub(crate) mode: ContractMode,
     pub(crate) assertions: Vec<Expr>,
-    pub(crate) display_assertions: Vec<Expr>,
+    pub(crate) streams: Vec<TokenStream>,
     pub(crate) desc: Option<String>,
 }
 
@@ -131,8 +133,7 @@ impl Contract {
         mode: ContractMode,
         toks: TokenStream,
     ) -> Self {
-        let (assertions, desc) = parse::parse_attributes(toks);
-        let display_assertions = assertions.clone();
+        let (assertions, streams, desc) = parse::parse_attributes(toks);
 
         let span = Span::call_site();
 
@@ -141,7 +142,7 @@ impl Contract {
             ty,
             mode,
             assertions,
-            display_assertions,
+            streams,
             desc,
         }
     }
@@ -155,10 +156,11 @@ pub(crate) struct FuncWithContracts {
 }
 
 impl FuncWithContracts {
-    /// Create a `FuncWithContracts` value from the attribute-tokens of the first
-    /// contract and a parsed version of the function.
+    /// Create a `FuncWithContracts` value from the attribute-tokens of the
+    /// first contract and a parsed version of the function.
     ///
-    /// The initial contract is parsed from the tokens, others will be read from parsed function.
+    /// The initial contract is parsed from the tokens, others will be read from
+    /// parsed function.
     pub(crate) fn new_with_initial_contract(
         mut func: ItemFn,
         cty: ContractType,
@@ -177,18 +179,17 @@ impl FuncWithContracts {
             .attrs
             .iter()
             .filter_map(|a| {
-                let name =
-                    a.path.segments.last().unwrap().value().ident.to_string();
+                let name = a.path.segments.last().unwrap().ident.to_string();
                 let (ty, mode) = ContractType::contract_type_and_mode(&name)?;
                 Some((ty, mode, a))
             })
             .map(|(ty, mode, a)| {
-                // the tts on attributes contains the out parenthesis, so some code might
-                // be mistakenly parsed as tuples, that's not good!
+                // the tts on attributes contains the out parenthesis, so some
+                // code might be mistakenly parsed as tuples, that's not good!
                 //
                 // this is a hack to get to the inner token stream.
 
-                let tok_tree = a.tts.clone().into_iter().next().unwrap();
+                let tok_tree = a.tokens.clone().into_iter().next().unwrap();
                 let toks = match tok_tree {
                     TokenTree::Group(group) => group.stream(),
                     TokenTree::Ident(i) => i.into_token_stream(),
@@ -209,14 +210,7 @@ impl FuncWithContracts {
                 .into_iter()
                 .filter(|attr| {
                     ContractType::contract_type_and_mode(
-                        &attr
-                            .path
-                            .segments
-                            .last()
-                            .unwrap()
-                            .value()
-                            .ident
-                            .to_string(),
+                        &attr.path.segments.last().unwrap().ident.to_string(),
                     )
                     .is_none()
                 })

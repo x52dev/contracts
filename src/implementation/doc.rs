@@ -3,10 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use crate::implementation::{Contract, ContractMode};
-use proc_macro::TokenStream;
 use proc_macro2::Span;
-use quote::ToTokens;
-use syn::{parse::Parser, Attribute, Expr};
+use proc_macro2::TokenStream;
+use syn::{parse::Parser, Attribute};
 
 pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
     let mut attrs = vec![];
@@ -21,14 +20,13 @@ pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
 
         let parser = Attribute::parse_outer;
 
-        let mut attributes = parser.parse(toks).unwrap();
+        let mut attributes = parser.parse2(toks).unwrap();
 
         attributes.remove(0)
     }
 
-    fn print_expr(expr: &Expr) -> String {
-        let toks = expr.into_token_stream();
-        toks.to_string()
+    fn print_stream(stream: &TokenStream) -> String {
+        stream.to_string()
     }
 
     // header
@@ -55,10 +53,12 @@ pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
 
             attrs.push(make_attribute(&header_txt));
 
-            for assert in &contract.assertions {
+            for (_assert, stream) in
+                contract.assertions.iter().zip(contract.streams.iter())
+            {
                 attrs.push(make_attribute(&format!(
                     " - `{}`",
-                    print_expr(assert)
+                    print_stream(stream)
                 )));
             }
 
@@ -66,16 +66,16 @@ pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
         } else {
             // document each assertion on its own
 
-            for assert in &contract.assertions {
+            for stream in &contract.streams {
                 let doc_str = if let Some(name) = mode {
                     format!(
                         "{} - {}: `{}`",
                         ty.message_name(),
                         name,
-                        print_expr(assert)
+                        print_stream(stream)
                     )
                 } else {
-                    format!("{}: `{}`", ty.message_name(), print_expr(assert))
+                    format!("{}: `{}`", ty.message_name(), print_stream(stream))
                 };
 
                 attrs.push(make_attribute(&doc_str));

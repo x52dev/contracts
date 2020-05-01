@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added support for MIRAI assertions
+- Added implication operator
+
 ## [0.3.0] - 2019-07-20
 ## Added
 - Pseudo-function `old(expr)` which in a post-condition evaluates the expression before function execution.

@@ -4,8 +4,6 @@
 
 use contracts::*;
 
-use quickcheck_macros::quickcheck;
-
 #[cfg(feature = "mirai_assertions")]
 mod mirai_assertion_mocks;
 
@@ -41,10 +39,8 @@ fn adder_example() {
     // add.add(2);
 }
 
-#[quickcheck]
-fn interpolate_example(a: f64, b: f64) {
-    use rand::Rng;
-
+#[test]
+fn interpolate_example() {
     #[contract_trait]
     trait Interpolate {
         #[pre(0.0 <= val, val <= 1.0)]
@@ -73,10 +69,10 @@ fn interpolate_example(a: f64, b: f64) {
         }
     }
 
-    let val = rand::thread_rng().gen_range(0.0, 1.0);
+    let min = 12.00;
+    let max = 24.00;
 
-    let min = a.min(b);
-    let max = a.max(b);
+    let val = 0.4;
 
     Linear::interpolate(min, max, val);
     Quadratic::interpolate(min, max, val);

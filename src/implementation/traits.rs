@@ -35,7 +35,8 @@ pub(crate) fn contract_trait_item_trait(
         m
     }
 
-    /// Create a wrapper function which has a default implementation and includes contracts.
+    /// Create a wrapper function which has a default implementation and
+    /// includes contracts.
     ///
     /// This new function forwards the call to the actual implementation.
     fn create_method_wrapper(method: &TraitItemMethod) -> TraitItemMethod {
@@ -53,7 +54,7 @@ pub(crate) fn contract_trait_item_trait(
                     ArgInfo { call_toks: toks }
                 }
                 Pat::Tuple(tup) => {
-                    let infos = tup.front.iter().map(arg_pat_info);
+                    let infos = tup.elems.iter().map(arg_pat_info);
 
                     let toks = {
                         let mut toks = proc_macro2::TokenStream::new();
@@ -79,20 +80,15 @@ pub(crate) fn contract_trait_item_trait(
 
         let argument_data = m
             .sig
-            .decl
             .inputs
             .clone()
             .into_iter()
             .map(|t: FnArg| match &t {
-                FnArg::SelfRef(_) | FnArg::SelfValue(_) => quote::quote!(self),
-                FnArg::Captured(c) => {
-                    let info = arg_pat_info(&c.pat);
+                FnArg::Receiver(_) => quote::quote!(self),
+                FnArg::Typed(p) => {
+                    let info = arg_pat_info(&p.pat);
 
                     info.call_toks
-                }
-                FnArg::Inferred(inf) => unimplemented!("Inferred pattern: {:?}", inf),
-                FnArg::Ignored(_ty) => {
-                    unimplemented!("Ignored patterns are not allowed in contract trait methods");
                 }
             })
             .collect::<Vec<_>>();
@@ -174,13 +170,14 @@ pub(crate) fn contract_trait_item_trait(
     toks.into()
 }
 
-/// Rename all methods inside an `impl` to use the "internal implementation" name.
+/// Rename all methods inside an `impl` to use the "internal implementation"
+/// name.
 pub(crate) fn contract_trait_item_impl(
     _attrs: TokenStream,
     impl_: ItemImpl,
 ) -> TokenStream {
     let new_impl = {
-        let mut impl_: ItemImpl = impl_.clone();
+        let mut impl_: ItemImpl = impl_;
 
         impl_.items.iter_mut().for_each(|it| {
             if let ImplItem::Method(method) = it {

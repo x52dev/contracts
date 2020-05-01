@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use syn::{FnArg, ImplItem, ImplItemMethod, Item, ItemFn, ItemImpl};
 
 use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
@@ -12,7 +12,7 @@ pub(crate) fn invariant(
     attr: TokenStream,
     toks: TokenStream,
 ) -> TokenStream {
-    let item: Item = syn::parse_macro_input!(toks as Item);
+    let item: Item = syn::parse_quote!(#toks);
 
     let name = mode.name().unwrap().to_string() + "invariant";
 
@@ -46,8 +46,8 @@ fn invariant_impl(
 ) -> TokenStream {
     // all that is done is prefix all the function definitions with
     // the invariant attribute.
-    // The following expansion of the attributes will then implement the invariant
-    // just like it's done for functions.
+    // The following expansion of the attributes will then implement the
+    // invariant just like it's done for functions.
 
     // The mode received is "raw", so it can't be "Disabled" or "LogOnly"
     // but it can't hurt to deal with it anyway.
@@ -64,11 +64,11 @@ fn invariant_impl(
     let invariant: proc_macro2::TokenStream = invariant.into();
 
     fn method_uses_self(method: &ImplItemMethod) -> bool {
-        let inputs = &method.sig.decl.inputs;
+        let inputs = &method.sig.inputs;
 
         if !inputs.is_empty() {
             match inputs[0] {
-                FnArg::SelfValue(_) | FnArg::SelfRef(_) => true,
+                FnArg::Receiver(_) => true,
                 _ => false,
             }
         } else {
@@ -86,10 +86,9 @@ fn invariant_impl(
             let method_toks = quote::quote! {
                 #[#invariant_ident(#invariant)]
                 #method
-            }
-            .into();
+            };
 
-            let met = syn::parse_macro_input!(method_toks as ImplItemMethod);
+            let met: ImplItemMethod = syn::parse_quote!(#method_toks);
 
             *method = met;
         }

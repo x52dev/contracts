@@ -5,7 +5,6 @@
 //! Testing of simple functions.
 
 use contracts::*;
-use quickcheck_macros::quickcheck;
 
 #[cfg(feature = "mirai_assertions")]
 mod mirai_assertion_mocks;
@@ -21,8 +20,8 @@ fn test_a_thing() {
     a(15);
 }
 
-#[quickcheck]
-fn test_sort(input: Vec<usize>) {
+#[test]
+fn test_sort() {
     fn is_sorted(input: &[usize]) -> bool {
         if input.len() < 2 {
             return true;
@@ -46,6 +45,8 @@ fn test_sort(input: Vec<usize>) {
 
         vec
     }
+
+    let input = vec![31, 234, 34, 0, 4234, 85];
 
     sort(&input);
 }

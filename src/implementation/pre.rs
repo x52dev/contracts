@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use syn::ItemFn;
 
 pub(crate) fn pre(
@@ -13,7 +13,7 @@ pub(crate) fn pre(
 ) -> TokenStream {
     let ty = ContractType::Pre;
 
-    let func = syn::parse_macro_input!(toks as ItemFn);
+    let func: ItemFn = syn::parse_quote!(#toks);
 
     let f = FuncWithContracts::new_with_initial_contract(func, ty, mode, attr);
 

@@ -2,12 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use proc_macro::TokenStream;
-
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::ToTokens;
 use syn::{
-    spanned::Spanned, visit_mut as visitor, Attribute, Block, Expr, ExprCall,
+    spanned::Spanned, visit_mut as visitor, Attribute, Expr, ExprCall,
     ReturnType,
 };
 
@@ -171,19 +169,19 @@ pub(crate) fn generate(
     docs: Vec<Attribute>,
     olds: Vec<OldExpr>,
 ) -> TokenStream {
-    let func_name = func.function.ident.to_string();
+    let func_name = func.function.sig.ident.to_string();
 
     // creates an assertion appropriate for the current mode
     let make_assertion = |mode: ContractMode,
                           ctype: ContractType,
-                          display_expr: &Expr,
+                          display: proc_macro2::TokenStream,
                           exec_expr: &Expr,
                           desc: &str| {
-        let span = display_expr.span();
+        let span = display.span();
         let mut result = proc_macro2::TokenStream::new();
 
         let format_args = quote::quote_spanned! { span=>
-            concat!(concat!(#desc, ": "), stringify!(#display_expr))
+            concat!(concat!(#desc, ": "), stringify!(#display))
         };
 
         if mode == ContractMode::LogOnly {
@@ -239,14 +237,14 @@ pub(crate) fn generate(
                 format!("{} of {} violated", c.ty.message_name(), func_name)
             };
 
-            c.assertions.iter().zip(c.display_assertions.iter()).map(
-                move |(expr, display_expr)| {
+            c.assertions.iter().zip(c.streams.iter()).map(
+                move |(expr, display)| {
                     let mode = c.mode.final_mode();
 
                     make_assertion(
                         mode,
                         ContractType::Pre,
-                        display_expr,
+                        display.clone().into(),
                         expr,
                         &desc.clone(),
                     )
@@ -277,14 +275,14 @@ pub(crate) fn generate(
                 format!("{} of {} violated", c.ty.message_name(), func_name)
             };
 
-            c.assertions.iter().zip(c.display_assertions.iter()).map(
-                move |(expr, display_expr)| {
+            c.assertions.iter().zip(c.streams.iter()).map(
+                move |(expr, display)| {
                     let mode = c.mode.final_mode();
 
                     make_assertion(
                         mode,
                         ContractType::Post,
-                        display_expr,
+                        display.clone().into(),
                         expr,
                         &desc.clone(),
                     )
@@ -323,7 +321,7 @@ pub(crate) fn generate(
 
     let block = func.function.block.clone();
 
-    let ret_ty = if let ReturnType::Type(_, ty) = &func.function.decl.output {
+    let ret_ty = if let ReturnType::Type(_, ty) = &func.function.sig.output {
         let span = ty.span();
         quote::quote_spanned! { span=>
             #ty
@@ -359,8 +357,7 @@ pub(crate) fn generate(
             ret
         }
 
-    }
-    .into();
+    };
 
     // insert documentation attributes
 
@@ -368,7 +365,7 @@ pub(crate) fn generate(
 
     // replace the old function body with the new one
 
-    func.function.block = Box::new(syn::parse_macro_input!(new_block as Block));
+    func.function.block = Box::new(syn::parse_quote!(#new_block));
 
     let res = func.function.into_token_stream();
 
