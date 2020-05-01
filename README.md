@@ -74,7 +74,7 @@ This crate exposes the `pre`, `post` and `invariant` attributes.
 - `invariant`s are checked both before *and* after a function/method ran.
 
 Additionally, all those attributes have versions with different "modes". See
-[the Modes section][#Modes] below.
+[the Modes section](#Modes) below.
 
 For `trait`s and trait `impl`s the `contract_trait` attribute can be used.
 
