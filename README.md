@@ -39,10 +39,10 @@ impl Library {
     }
 
     #[debug_pre(self.book_exists(book_id))]
-    #[post(ret ==> self.available.len() == old(self.available.len()) - 1)]
-    #[post(ret ==> self.lent.len() == old(self.lent.len()) + 1)]
-    #[debug_post(ret ==> self.lent.contains(book_id))]
-    #[debug_post(!ret ==> self.lent.contains(book_id), "Book already lent")]
+    #[post(ret -> self.available.len() == old(self.available.len()) - 1)]
+    #[post(ret -> self.lent.len() == old(self.lent.len()) + 1)]
+    #[debug_post(ret -> self.lent.contains(book_id))]
+    #[debug_post(!ret -> self.lent.contains(book_id), "Book already lent")]
     pub fn lend(&mut self, book_id: &str) -> bool {
         if self.available.contains(book_id) {
             self.available.remove(book_id);
@@ -95,14 +95,14 @@ fn incr(x: &mut usize) {
 }
 ```
 
-### `==>` operator
+### `->` operator
 
 For more complex functions it can be useful to express behaviour using logical
 implication. Because Rust does not feature an operator for implication, this
 crate adds this operator for use in attributes.
 
 ```rust
-#[post(person_name.is_some() ==> ret.contains(person_name.unwrap()))]
+#[post(person_name.is_some() -> ret.contains(person_name.unwrap()))]
 fn geeting(person_name: Option<&str>) -> String {
     let mut s = String::from("Hello");
     if let Some(name) = person_name {
@@ -119,8 +119,8 @@ This operator is right-associative.
 **Note**: Because of the design of `syn`, it is tricky to add custom operators
 to be parsed, so this crate performs a rewrite of the `TokenStream` instead.
 The rewrite works by separating the expression into a part that's left of the
-`==>` operator and the rest on the right side. This means that
-`if a ==> b { c } else { d }` will not generate the expected code.
+`->` operator and the rest on the right side. This means that
+`if a -> b { c } else { d }` will not generate the expected code.
 Explicit grouping using parenthesis or curly-brackets can be used to avoid this.
 
 

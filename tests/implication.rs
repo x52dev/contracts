@@ -9,8 +9,8 @@ mod mirai_assertion_mocks;
 
 #[test]
 fn test_ret_implication() {
-    #[post(do_thing ==> ret.is_some(), "do_thing should cause a Some(_)")]
-    #[post(!do_thing ==> ret.is_none(), "!do_thing should cause a None")]
+    #[post(do_thing -> ret.is_some(), "do_thing should cause a Some(_)")]
+    #[post(!do_thing -> ret.is_none(), "!do_thing should cause a None")]
     fn perform_thing(do_thing: bool) -> Option<usize> {
         if do_thing {
             Some(12)
@@ -25,8 +25,8 @@ fn test_ret_implication() {
 
 #[test]
 fn test_ret_implication_old() {
-    #[post(old(*x) % 2 == 0 ==> *x % 2 == 0)]
-    #[post(old(*x) % 2 == 1 ==> *x % 2 == 1)]
+    #[post(old(*x) % 2 == 0 -> *x % 2 == 0)]
+    #[post(old(*x) % 2 == 1 -> *x % 2 == 1)]
     fn incr(x: &mut usize) {
         *x += 2;
     }
@@ -40,8 +40,8 @@ fn test_ret_implication_old() {
 
 #[test]
 fn test_pre_implication() {
-    #[pre(!negative ==> value >= 0)]
-    #[pre(negative ==> value < 0)]
+    #[pre(!negative -> value >= 0)]
+    #[pre(negative -> value < 0)]
     fn thing(negative: bool, value: isize) {}
 
     thing(true, -123);
@@ -50,8 +50,19 @@ fn test_pre_implication() {
 }
 
 #[test]
+#[should_panic(expected = "Post")]
+fn test_failing_implication() {
+    #[post(t -> ret)]
+    fn only_true(t: bool) -> bool {
+        false // oops
+    }
+
+    only_true(true);
+}
+
+#[test]
 fn test_nested_implication() {
-    #[post(a ==> b ==> ret.is_some())]
+    #[post(a -> b -> ret.is_some())]
     fn test(a: bool, b: bool) -> Option<usize> {
         if a {
             if b {

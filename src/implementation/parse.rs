@@ -106,16 +106,15 @@ fn rewrite(segments: Vec<TokenTree>) -> proc_macro2::TokenStream {
                     }
                 };
 
-                if punct(idx, '=', Spacing::Joint)
-                    && punct(idx + 1, '=', Spacing::Joint)
-                    && punct(idx + 2, '>', Spacing::Alone)
+                if punct(idx, '-', Spacing::Joint)
+                    && punct(idx + 1, '>', Spacing::Alone)
                 {
                     // found the implication
-                    let rest = Vec::from(&segments[idx + 3..]);
+                    let rest = Vec::from(&segments[idx + 2..]);
                     let rhs_stream = rewrite(rest);
 
                     rhs = Some(rhs_stream);
-                    span = Some(segments[idx + 2].span());
+                    span = Some(segments[idx + 1].span());
                     break 'segment;
                 } else {
                     // consume all so that =========> would not match with
@@ -157,7 +156,7 @@ fn rewrite(segments: Vec<TokenTree>) -> proc_macro2::TokenStream {
 
             quote::quote_spanned! {
                 span =>
-                if !#lhs { true } else { #rhs }
+                (!(#lhs) || (#rhs))
             }
         }
     }

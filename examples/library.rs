@@ -25,10 +25,10 @@ impl Library {
     }
 
     #[debug_pre(self.book_exists(book_id))]
-    #[post(ret ==> self.available.len() == old(self.available.len()) - 1)]
-    #[post(ret ==> self.lent.len() == old(self.lent.len()) + 1)]
-    #[debug_post(ret ==> self.lent.contains(book_id))]
-    #[debug_post(!ret ==> self.lent.contains(book_id), "Book already lent")]
+    #[post(ret -> self.available.len() == old(self.available.len()) - 1)]
+    #[post(ret -> self.lent.len() == old(self.lent.len()) + 1)]
+    #[debug_post(ret -> self.lent.contains(book_id))]
+    #[debug_post(!ret -> self.lent.contains(book_id), "Book already lent")]
     pub fn lend(&mut self, book_id: &str) -> bool {
         if self.available.contains(book_id) {
             self.available.remove(book_id);
