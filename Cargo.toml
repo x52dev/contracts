@@ -1,6 +1,6 @@
 [package]
 name = "contracts"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["karroffel <therzog@mail.de>"]
 edition = "2018"
 repository = "https://gitlab.com/karroffel/contracts"
@@ -12,10 +12,10 @@ categories = [
 ]
 keywords = [
     "design-by-contract",
-    "contract-programming",
     "precondition",
     "postcondition",
     "invariant",
+    "verification",
 ]
 documentation = "https://docs.rs/contracts"
 description = "Design-by-contract attributes"
