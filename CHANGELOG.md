@@ -6,13 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.5.0] - 2020-08-06
+### Changed
+- Implication operator is now `->`.
+
 ## [0.4.0] - 2020-05-01
-# Added
+### Added
 - Added support for MIRAI assertions
 - Added implication operator
 
 ## [0.3.0] - 2019-07-20
-## Added
+### Added
 - Pseudo-function `old(expr)` which in a post-condition evaluates the expression before function execution.
 - Automatic generation of documentation containing all contracts.
 
