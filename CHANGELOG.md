@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.5.1] - 2020-08-06
+### Changed
+- Trait methods now handle attributes better.
+
 ## [0.5.0] - 2020-08-06
 ### Changed
 - Implication operator is now `->`.
