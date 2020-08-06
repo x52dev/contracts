@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use syn::{
     FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod,
 };
@@ -23,12 +23,17 @@ pub(crate) fn contract_trait_item_trait(
 
         // transform method
         {
-            // remove all attributes and rename
+            // remove any contracts attributes and rename
             let name = m.sig.ident.to_string();
 
             let new_name = contract_method_impl_name(&name);
 
             m.attrs.clear();
+            m.attrs.push(syn::parse_quote!(#[doc(hidden)]));
+            m.attrs.push(syn::parse_quote!(#[doc = "This is an internal function that is not meant to be used directly!"]));
+            m.attrs.push(syn::parse_quote!(#[doc = "See the documentation of the `#[contract_trait]` attribute."]));
+            m.attrs.push(syn::parse_quote!(#[inline(always)]));
+
             m.sig.ident = syn::Ident::new(&new_name, m.sig.ident.span());
         }
 
@@ -118,8 +123,7 @@ pub(crate) fn contract_trait_item_trait(
         };
 
         {
-            let block: syn::Block =
-                syn::parse_macro_input::parse(body).unwrap();
+            let block: syn::Block = syn::parse2(body).unwrap();
             m.default = Some(block);
             m.semi_token = None;
         }
@@ -198,4 +202,105 @@ pub(crate) fn contract_trait_item_impl(
     };
 
     toks.into()
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn attributes_stay_on_trait_def() {
+        // attributes on functions should apply to the outer "wrapping" function
+        // only, the "internal" function should be hidden and be inlined.
+
+        let code = syn::parse_quote! {
+            trait Random {
+                #[aaa]
+                #[post((min..max).contains(ret))]
+                fn random_number(min: u8, max: u8) -> u8;
+            }
+        };
+
+        let generated =
+            super::contract_trait_item_trait(Default::default(), code);
+
+        let generated_trait: syn::ItemTrait = syn::parse_quote!(#generated);
+
+        if let syn::TraitItem::Method(m) = &generated_trait.items[0] {
+            // This is the generated item, no user-defined attributes on it.
+            assert_ne!(m.sig.ident.to_string(), "random_number");
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("aaa")),
+                false
+            );
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("inline")),
+                true
+            );
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("doc")),
+                true
+            );
+        } else {
+            panic!()
+        }
+
+        if let syn::TraitItem::Method(m) = &generated_trait.items[1] {
+            // This is the "wrapper" item, contains all original attributes
+            assert_eq!(m.sig.ident.to_string(), "random_number");
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("aaa")),
+                true
+            );
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("post")),
+                true
+            );
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("doc")),
+                false
+            );
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn attributes_stay_on_trait_impl() {
+        // attributes on functions should apply to the outer "wrapping" function
+        // only, the "internal" function should be hidden and be inlined.
+
+        let code = syn::parse_quote! {
+            impl Random for AlwaysMin {
+                /// docs for this function!
+                #[no_panic]
+                fn random_number(min: u8, max: u8) -> u8 {
+                    min
+                }
+            }
+        };
+
+        let generated =
+            super::contract_trait_item_impl(Default::default(), code);
+
+        let generated_trait: syn::ItemImpl = syn::parse_quote!(#generated);
+
+        if let syn::ImplItem::Method(m) = &generated_trait.items[0] {
+            // This is the generated item, has all user-defined attributes on it.
+            assert_ne!(m.sig.ident.to_string(), "random_number");
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("no_panic")),
+                true
+            );
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("inline")),
+                false
+            );
+            assert_eq!(
+                m.attrs.iter().any(|attr| attr.path.is_ident("doc")),
+                true
+            );
+        } else {
+            panic!()
+        }
+    }
 }

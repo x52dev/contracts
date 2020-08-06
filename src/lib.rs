@@ -369,12 +369,12 @@ pub fn test_invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn contract_trait(attrs: TokenStream, toks: TokenStream) -> TokenStream {
-    let attrs = attrs.into();
+    let attrs: proc_macro2::TokenStream = attrs.into();
     let toks: proc_macro2::TokenStream = toks.into();
 
     let item: syn::Item = syn::parse_quote!(#toks);
 
-    match item {
+    let tts = match item {
         syn::Item::Trait(trait_) => implementation::contract_trait_item_trait(attrs, trait_),
         syn::Item::Impl(impl_) => {
             assert!(
@@ -384,5 +384,7 @@ pub fn contract_trait(attrs: TokenStream, toks: TokenStream) -> TokenStream {
             implementation::contract_trait_item_impl(attrs, impl_)
         }
         _ => panic!("#[contract_trait] can only be applied to `trait` and `impl ... for` items"),
-    }
+    };
+
+    tts.into()
 }
