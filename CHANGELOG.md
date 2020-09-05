@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.5.2] - 2020-09-05
+### Fixed
+- Unused braces in function body generated code are removed
+
 ## [0.5.1] - 2020-08-06
 ### Changed
 - Trait methods now handle attributes better.

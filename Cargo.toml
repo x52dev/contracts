@@ -1,6 +1,6 @@
 [package]
 name = "contracts"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["karroffel <therzog@mail.de>"]
 edition = "2018"
 repository = "https://gitlab.com/karroffel/contracts"
