@@ -139,7 +139,7 @@
 //! ## Modes
 //!
 //! All the attributes (requires, ensures, invariant) have `debug_*` and `test_*` versions.
-//! 
+//!
 //! - `debug_requires`/`debug_ensures`/`debug_invariant` use `debug_assert!`
 //!   internally rather than `assert!`
 //! - `test_requires`/`test_ensures`/`test_invariant` guard the `assert!` with an
@@ -156,7 +156,7 @@
 //!       // ...
 //!   }
 //!   ```
-//! 
+//!
 //! ## Feature flags
 //!
 //! Following feature flags are available:
