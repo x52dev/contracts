@@ -332,9 +332,7 @@ pub(crate) fn generate(
 
     let body = quote::quote! {
         #[allow(unused_mut)]
-        let mut run = || -> #ret_ty {
-            #block
-        };
+        let mut run = || -> #ret_ty #block;
 
         let ret = run();
     };
