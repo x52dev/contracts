@@ -87,7 +87,7 @@
 //! - `invariant`s are checked both before *and* after a function/method ran.
 //!
 //! Additionally, all those attributes have versions with different "modes". See
-//! [the Modes section][#Modes] below.
+//! [the Modes section](#modes) below.
 //!
 //! For `trait`s and trait `impl`s the `contract_trait` attribute can be used.
 //!
@@ -136,7 +136,27 @@
 //! `if a -> b { c } else { d }` will not generate the expected code.
 //! Explicit grouping using parenthesis or curly-brackets can be used to avoid this.
 //!
+//! ## Modes
 //!
+//! All the attributes (requires, ensures, invariant) have `debug_*` and `test_*` versions.
+//! 
+//! - `debug_requires`/`debug_ensures`/`debug_invariant` use `debug_assert!`
+//!   internally rather than `assert!`
+//! - `test_requires`/`test_ensures`/`test_invariant` guard the `assert!` with an
+//!   `if cfg!(test)`.
+//!   This should mostly be used for stating equivalence to "slow but obviously
+//!   correct" alternative implementations or checks.
+//!   
+//!   For example, a merge-sort implementation might look like this
+//!   ```rust
+//!   # use contracts::*;
+//!   # fn is_sorted<T>(x: T) -> bool { true }
+//!   #[test_ensures(is_sorted(input))]
+//!   fn merge_sort<T: Ord + Copy>(input: &mut [T]) {
+//!       // ...
+//!   }
+//!   ```
+//! 
 //! ## Feature flags
 //!
 //! Following feature flags are available:
@@ -151,8 +171,8 @@
 //!
 //! [dbc]: https://en.wikipedia.org/wiki/Design_by_contract
 //! [`libhoare`]: https://github.com/nrc/libhoare
-//! [precond]: attr.pre.html
-//! [postcond]: attr.post.html
+//! [precond]: attr.requires.html
+//! [postcond]: attr.ensures.html
 //! [invariant]: attr.invariant.html
 //! [MIRAI]: https://github.com/facebookexperimental/MIRAI
 
