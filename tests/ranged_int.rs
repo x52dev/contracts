@@ -17,13 +17,13 @@ pub struct Range {
 }
 
 impl Range {
-    #[pre(min < max)]
+    #[requires(min < max)]
     pub fn new(min: usize, max: usize) -> Self {
         Range { min, max }
     }
 
-    #[post(ret.min == self.min.min(other.min))]
-    #[post(ret.max == self.max.max(other.max))]
+    #[ensures(ret.min == self.min.min(other.min))]
+    #[ensures(ret.max == self.max.max(other.max))]
     pub fn merge(self, other: Range) -> Range {
         let min = self.min.min(other.min);
         let max = self.max.max(other.max);
@@ -44,7 +44,7 @@ pub struct RangedInt {
 
 #[invariant(self.range.contains(self.value))]
 impl RangedInt {
-    #[pre(range.contains(val))]
+    #[requires(range.contains(val))]
     pub fn new(range: Range, val: usize) -> Self {
         RangedInt { range, value: val }
     }
@@ -57,7 +57,7 @@ impl RangedInt {
         self.range
     }
 
-    #[post(ret.range.contains(ret.value))]
+    #[ensures(ret.range.contains(ret.value))]
     pub fn extend(self, range: Range) -> Self {
         let new_range = self.range.merge(range);
 
@@ -68,9 +68,9 @@ impl RangedInt {
 impl Add<Self> for RangedInt {
     type Output = RangedInt;
 
-    #[pre(self.range.merge(rhs.range).contains(self.value + rhs.value))]
-    #[post(ret.range.contains(ret.value))]
-    #[post(ret.value == self.value + rhs.value)]
+    #[requires(self.range.merge(rhs.range).contains(self.value + rhs.value))]
+    #[ensures(ret.range.contains(ret.value))]
+    #[ensures(ret.value == self.value + rhs.value)]
     fn add(self, rhs: Self) -> Self::Output {
         let mut new_ranged = self.extend(rhs.range);
 
@@ -83,8 +83,8 @@ impl Add<Self> for RangedInt {
 impl Add<usize> for RangedInt {
     type Output = RangedInt;
 
-    #[pre(self.range.contains(rhs))]
-    #[post(ret.value == self.value + rhs)]
+    #[requires(self.range.contains(rhs))]
+    #[ensures(ret.value == self.value + rhs)]
     fn add(self, rhs: usize) -> Self::Output {
         let mut new = self;
         new.value += rhs;

@@ -13,7 +13,7 @@ fn adder_example() {
     trait Adder {
         fn tell(&self) -> usize;
 
-        #[pre((self.tell() + val) < 20)]
+        #[requires((self.tell() + val) < 20)]
         fn add(&mut self, val: usize);
     }
 
@@ -43,9 +43,9 @@ fn adder_example() {
 fn interpolate_example() {
     #[contract_trait]
     trait Interpolate {
-        #[pre(0.0 <= val, val <= 1.0)]
-        #[pre(min < max)]
-        #[post(min <= ret, ret <= max)]
+        #[requires(0.0 <= val, val <= 1.0)]
+        #[requires(min < max)]
+        #[ensures(min <= ret, ret <= max)]
         fn interpolate(min: f64, max: f64, val: f64) -> f64;
     }
 

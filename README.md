@@ -30,19 +30,19 @@ impl Library {
             || self.lent.contains(book_id)
     }
 
-    #[debug_pre(!self.book_exists(book_id), "Book IDs are unique")]
-    #[debug_post(self.available.contains(book_id), "Book now available")]
-    #[post(self.available.len() == old(self.available.len()) + 1)]
-    #[post(self.lent.len() == old(self.lent.len()), "No lent change")]
+    #[debug_requires(!self.book_exists(book_id), "Book IDs are unique")]
+    #[debug_ensures(self.available.contains(book_id), "Book now available")]
+    #[ensures(self.available.len() == old(self.available.len()) + 1)]
+    #[ensures(self.lent.len() == old(self.lent.len()), "No lent change")]
     pub fn add_book(&mut self, book_id: &str) {
         self.available.insert(book_id.to_string());
     }
 
-    #[debug_pre(self.book_exists(book_id))]
-    #[post(ret -> self.available.len() == old(self.available.len()) - 1)]
-    #[post(ret -> self.lent.len() == old(self.lent.len()) + 1)]
-    #[debug_post(ret -> self.lent.contains(book_id))]
-    #[debug_post(!ret -> self.lent.contains(book_id), "Book already lent")]
+    #[debug_requires(self.book_exists(book_id))]
+    #[ensures(ret -> self.available.len() == old(self.available.len()) - 1)]
+    #[ensures(ret -> self.lent.len() == old(self.lent.len()) + 1)]
+    #[debug_ensures(ret -> self.lent.contains(book_id))]
+    #[debug_ensures(!ret -> self.lent.contains(book_id), "Book already lent")]
     pub fn lend(&mut self, book_id: &str) -> bool {
         if self.available.contains(book_id) {
             self.available.remove(book_id);
@@ -53,11 +53,11 @@ impl Library {
         }
     }
 
-    #[debug_pre(self.lent.contains(book_id), "Can't return a non-lent book")]
-    #[post(self.lent.len() == old(self.lent.len()) - 1)]
-    #[post(self.available.len() == old(self.available.len()) + 1)]
-    #[debug_post(!self.lent.contains(book_id))]
-    #[debug_post(self.available.contains(book_id), "Book available again")]
+    #[debug_requires(self.lent.contains(book_id), "Can't return a non-lent book")]
+    #[ensures(self.lent.len() == old(self.lent.len()) - 1)]
+    #[ensures(self.available.len() == old(self.available.len()) + 1)]
+    #[debug_ensures(!self.lent.contains(book_id))]
+    #[debug_ensures(self.available.contains(book_id), "Book available again")]
     pub fn return_book(&mut self, book_id: &str) {
         self.lent.remove(book_id);
         self.available.insert(book_id.to_string());
@@ -67,10 +67,10 @@ impl Library {
 
 ## Attributes
 
-This crate exposes the `pre`, `post` and `invariant` attributes.
+This crate exposes the `requires`, `ensures` and `invariant` attributes.
 
-- `pre`-conditions are checked before a function/method is executed.
-- `post`-conditions are checked after a function/method ran to completion
+- `requires` are checked before a function/method is executed.
+- `ensures` are checked after a function/method ran to completion
 - `invariant`s are checked both before *and* after a function/method ran.
 
 Additionally, all those attributes have versions with different "modes". See
@@ -86,10 +86,10 @@ More specific information can be found in the crate documentation.
 
 One unique feature that this crate provides is an `old()` pseudo-function which
 allows to perform checks using a value of a parameter before the function call
-happened. This is only available in `post` attributes.
+happened. This is only available in `ensures` attributes.
 
 ```rust
-#[post(*x == old(*x) + 1, "after the call `x` was incremented")]
+#[ensures(*x == old(*x) + 1, "after the call `x` was incremented")]
 fn incr(x: &mut usize) {
     *x += 1;
 }
@@ -102,7 +102,7 @@ implication. Because Rust does not feature an operator for implication, this
 crate adds this operator for use in attributes.
 
 ```rust
-#[post(person_name.is_some() -> ret.contains(person_name.unwrap()))]
+#[ensures(person_name.is_some() -> ret.contains(person_name.unwrap()))]
 fn geeting(person_name: Option<&str>) -> String {
     let mut s = String::from("Hello");
     if let Some(name) = person_name {
@@ -126,18 +126,18 @@ Explicit grouping using parenthesis or curly-brackets can be used to avoid this.
 
 ## Modes
 
-All the attributes (pre, post, invariant) have `debug_*` and `test_*` versions.
+All the attributes (requires, ensures, invariant) have `debug_*` and `test_*` versions.
 
-- `debug_pre`/`debug_post`/`debug_invariant` use `debug_assert!` internally
-  rather than `assert!`
-- `test_pre`/`test_post`/`test_invariant` guard the `assert!` with an
+- `debug_requires`/`debug_ensures`/`debug_invariant` use `debug_assert!`
+  internally rather than `assert!`
+- `test_requires`/`test_ensures`/`test_invariant` guard the `assert!` with an
   `if cfg!(test)`.
   This should mostly be used for stating equivalence to "slow but obviously
   correct" alternative implementations or checks.
   
   For example, a merge-sort implementation might look like this
   ```rust
-  #[test_post(is_sorted(input))]
+  #[test_ensures(is_sorted(input))]
   fn merge_sort<T: Ord + Copy>(input: &mut [T]) {
       // ...
   }
@@ -150,7 +150,7 @@ To install the latest version, add `contracts` to the dependency section of the
 
 ```
 [dependencies]
-contracts = "0.5.2"
+contracts = "0.6.0"
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;`

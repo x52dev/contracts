@@ -11,8 +11,8 @@ mod mirai_assertion_mocks;
 
 #[test]
 fn test_a_thing() {
-    #[pre(x > 10, x < 20, "x must be in valid range")]
-    #[post(ret > x, "result will be bigger than input")]
+    #[requires(x > 10, x < 20, "x must be in valid range")]
+    #[ensures(ret > x, "result will be bigger than input")]
     fn a(x: usize) -> usize {
         x + 1
     }
@@ -36,8 +36,8 @@ fn test_sort() {
         true
     }
 
-    #[post(ret.len() == input.len())]
-    #[test_post(is_sorted(&ret))]
+    #[ensures(ret.len() == input.len())]
+    #[test_ensures(is_sorted(&ret))]
     fn sort(input: &[usize]) -> Vec<usize> {
         let mut vec = input.to_owned();
 
@@ -75,9 +75,9 @@ fn test_invariant() {
 fn test_early_return() {
     // make sure that post-conditions are executed even if an early return happened.
 
-    #[post(ret >= 0)]
-    #[post(ret == x || ret == -x)]
-    #[post(ret * ret == x * x)]
+    #[ensures(ret >= 0)]
+    #[ensures(ret == x || ret == -x)]
+    #[ensures(ret * ret == x * x)]
     fn abs(x: isize) -> isize {
         if x < 0 {
             // this implementation does not respect the contracts!

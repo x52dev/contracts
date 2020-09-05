@@ -98,7 +98,7 @@ pub(crate) fn extract_old_calls(contracts: &mut [Contract]) -> Vec<OldExpr> {
     };
 
     for contract in contracts {
-        if contract.ty != ContractType::Post {
+        if contract.ty != ContractType::Ensures {
             continue;
         }
 
@@ -118,34 +118,34 @@ fn get_assert_macro(
 ) -> Option<Ident> {
     if cfg!(feature = "mirai_assertions") {
         match (ctype, mode) {
-            (ContractType::Pre, ContractMode::Always) => {
+            (ContractType::Requires, ContractMode::Always) => {
                 Some(Ident::new("checked_precondition", span))
             }
-            (ContractType::Pre, ContractMode::Debug) => {
+            (ContractType::Requires, ContractMode::Debug) => {
                 Some(Ident::new("debug_checked_precondition", span))
             }
-            (ContractType::Pre, ContractMode::Test) => {
+            (ContractType::Requires, ContractMode::Test) => {
                 Some(Ident::new("debug_checked_precondition", span))
             }
-            (ContractType::Pre, ContractMode::Disabled) => {
+            (ContractType::Requires, ContractMode::Disabled) => {
                 Some(Ident::new("precondition", span))
             }
-            (ContractType::Pre, ContractMode::LogOnly) => {
+            (ContractType::Requires, ContractMode::LogOnly) => {
                 Some(Ident::new("precondition", span))
             }
-            (ContractType::Post, ContractMode::Always) => {
+            (ContractType::Ensures, ContractMode::Always) => {
                 Some(Ident::new("checked_postcondition", span))
             }
-            (ContractType::Post, ContractMode::Debug) => {
+            (ContractType::Ensures, ContractMode::Debug) => {
                 Some(Ident::new("debug_checked_postcondition", span))
             }
-            (ContractType::Post, ContractMode::Test) => {
+            (ContractType::Ensures, ContractMode::Test) => {
                 Some(Ident::new("debug_checked_postcondition", span))
             }
-            (ContractType::Post, ContractMode::Disabled) => {
+            (ContractType::Ensures, ContractMode::Disabled) => {
                 Some(Ident::new("postcondition", span))
             }
-            (ContractType::Post, ContractMode::LogOnly) => {
+            (ContractType::Ensures, ContractMode::LogOnly) => {
                 Some(Ident::new("postcondition", span))
             }
             (ContractType::Invariant, _) => {
@@ -223,7 +223,7 @@ pub(crate) fn generate(
         .contracts
         .iter()
         .filter(|c| {
-            c.ty == ContractType::Pre || c.ty == ContractType::Invariant
+            c.ty == ContractType::Requires || c.ty == ContractType::Invariant
         })
         .flat_map(|c| {
             let desc = if let Some(desc) = c.desc.as_ref() {
@@ -243,7 +243,7 @@ pub(crate) fn generate(
 
                     make_assertion(
                         mode,
-                        ContractType::Pre,
+                        ContractType::Requires,
                         display.clone().into(),
                         expr,
                         &desc.clone(),
@@ -261,7 +261,7 @@ pub(crate) fn generate(
         .contracts
         .iter()
         .filter(|c| {
-            c.ty == ContractType::Post || c.ty == ContractType::Invariant
+            c.ty == ContractType::Ensures || c.ty == ContractType::Invariant
         })
         .flat_map(|c| {
             let desc = if let Some(desc) = c.desc.as_ref() {
@@ -281,7 +281,7 @@ pub(crate) fn generate(
 
                     make_assertion(
                         mode,
-                        ContractType::Post,
+                        ContractType::Ensures,
                         display.clone().into(),
                         expr,
                         &desc.clone(),

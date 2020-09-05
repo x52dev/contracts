@@ -5,12 +5,12 @@
 use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
 use proc_macro2::TokenStream;
 
-pub(crate) fn post(
+pub(crate) fn ensures(
     mode: ContractMode,
     attr: TokenStream,
     toks: TokenStream,
 ) -> TokenStream {
-    let ty = ContractType::Post;
+    let ty = ContractType::Ensures;
 
     let func = syn::parse_quote!(#toks);
 

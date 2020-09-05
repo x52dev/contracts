@@ -6,12 +6,12 @@ use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
 use proc_macro2::TokenStream;
 use syn::ItemFn;
 
-pub(crate) fn pre(
+pub(crate) fn requires(
     mode: ContractMode,
     attr: TokenStream,
     toks: TokenStream,
 ) -> TokenStream {
-    let ty = ContractType::Pre;
+    let ty = ContractType::Requires;
 
     let func: ItemFn = syn::parse_quote!(#toks);
 

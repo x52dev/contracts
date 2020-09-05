@@ -7,8 +7,8 @@
 //! This crate is heavily inspired by the [`libhoare`] compiler plugin.
 //!
 //! The main use of this crate is to annotate functions and methods using
-//! "contracts" in the form of [*pre-conditions*][precond],
-//! [*post-conditions*][postcond] and [*invariants*][invariant].
+//! "contracts" in the form of [*pre-conditions* (`requires`)][precond],
+//! [*post-conditions* (`ensures`)][postcond] and [*invariants*][invariant].
 //!
 //! Each "contract" annotation that is violated will cause an assertion failure.
 //!
@@ -21,8 +21,8 @@
 //!
 //! ```rust
 //! # use contracts::*;
-//! #[pre(x > 0, "x must be in the valid input range")]
-//! #[post(ret.is_some() -> ret.unwrap() * ret.unwrap() == x)]
+//! #[requires(x > 0, "x must be in the valid input range")]
+//! #[ensures(ret.is_some() -> ret.unwrap() * ret.unwrap() == x)]
 //! fn integer_sqrt(x: u64) -> Option<u64> {
 //!    // ...
 //! # unimplemented!()
@@ -43,19 +43,19 @@
 //!             || self.lent.contains(book_id)
 //!     }
 //!
-//!     #[debug_pre(!self.book_exists(book_id), "Book IDs are unique")]
-//!     #[debug_post(self.available.contains(book_id), "Book now available")]
-//!     #[post(self.available.len() == old(self.available.len()) + 1)]
-//!     #[post(self.lent.len() == old(self.lent.len()), "No lent change")]
+//!     #[debug_requires(!self.book_exists(book_id), "Book IDs are unique")]
+//!     #[debug_ensures(self.available.contains(book_id), "Book now available")]
+//!     #[ensures(self.available.len() == old(self.available.len()) + 1)]
+//!     #[ensures(self.lent.len() == old(self.lent.len()), "No lent change")]
 //!     pub fn add_book(&mut self, book_id: &str) {
 //!         self.available.insert(book_id.to_string());
 //!     }
 //!
-//!     #[debug_pre(self.book_exists(book_id))]
-//!     #[post(ret -> self.available.len() == old(self.available.len()) - 1)]
-//!     #[post(ret -> self.lent.len() == old(self.lent.len()) + 1)]
-//!     #[debug_post(ret -> self.lent.contains(book_id))]
-//!     #[debug_post(!ret -> self.lent.contains(book_id), "Book already lent")]
+//!     #[debug_requires(self.book_exists(book_id))]
+//!     #[ensures(ret -> self.available.len() == old(self.available.len()) - 1)]
+//!     #[ensures(ret -> self.lent.len() == old(self.lent.len()) + 1)]
+//!     #[debug_ensures(ret -> self.lent.contains(book_id))]
+//!     #[debug_ensures(!ret -> self.lent.contains(book_id), "Book already lent")]
 //!     pub fn lend(&mut self, book_id: &str) -> bool {
 //!         if self.available.contains(book_id) {
 //!             self.available.remove(book_id);
@@ -66,11 +66,11 @@
 //!         }
 //!     }
 //!
-//!     #[debug_pre(self.lent.contains(book_id), "Can't return a non-lent book")]
-//!     #[post(self.lent.len() == old(self.lent.len()) - 1)]
-//!     #[post(self.available.len() == old(self.available.len()) + 1)]
-//!     #[debug_post(!self.lent.contains(book_id))]
-//!     #[debug_post(self.available.contains(book_id), "Book available again")]
+//!     #[debug_requires(self.lent.contains(book_id), "Can't return a non-lent book")]
+//!     #[ensures(self.lent.len() == old(self.lent.len()) - 1)]
+//!     #[ensures(self.available.len() == old(self.available.len()) + 1)]
+//!     #[debug_ensures(!self.lent.contains(book_id))]
+//!     #[debug_ensures(self.available.contains(book_id), "Book available again")]
 //!     pub fn return_book(&mut self, book_id: &str) {
 //!         self.lent.remove(book_id);
 //!         self.available.insert(book_id.to_string());
@@ -80,10 +80,10 @@
 //!
 //! ## Attributes
 //!
-//! This crate exposes the `pre`, `post` and `invariant` attributes.
+//! This crate exposes the `requires`, `ensures` and `invariant` attributes.
 //!
-//! - `pre`-conditions are checked before a function/method is executed.
-//! - `post`-conditions are checked after a function/method ran to completion
+//! - `requires` are checked before a function/method is executed.
+//! - `ensures` are checked after a function/method ran to completion
 //! - `invariant`s are checked both before *and* after a function/method ran.
 //!
 //! Additionally, all those attributes have versions with different "modes". See
@@ -97,11 +97,11 @@
 //!
 //! One unique feature that this crate provides is an `old()` pseudo-function which
 //! allows to perform checks using a value of a parameter before the function call
-//! happened. This is only available in `post` attributes.
+//! happened. This is only available in `ensures` attributes.
 //!
 //! ```rust
 //! # use contracts::*;
-//! #[post(*x == old(*x) + 1, "after the call `x` was incremented")]
+//! #[ensures(*x == old(*x) + 1, "after the call `x` was incremented")]
 //! fn incr(x: &mut usize) {
 //!     *x += 1;
 //! }
@@ -115,7 +115,7 @@
 //!
 //! ```rust
 //! # use contracts::*;
-//! #[post(person_name.is_some() -> ret.contains(person_name.unwrap()))]
+//! #[ensures(person_name.is_some() -> ret.contains(person_name.unwrap()))]
 //! fn geeting(person_name: Option<&str>) -> String {
 //!     let mut s = String::from("Hello");
 //!     if let Some(name) = person_name {
@@ -169,37 +169,37 @@ use proc_macro::TokenStream;
 ///
 /// ```rust
 /// # use contracts::*;
-/// #[pre(elems.len() >= 1)]
+/// #[requires(elems.len() >= 1)]
 /// fn max<T: Ord + Copy>(elems: &[T]) -> T {
 ///    // ...
 /// # unimplemented!()
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub fn requires(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let attr = attr.into();
     let toks = toks.into();
-    implementation::pre(ContractMode::Always, attr, toks).into()
+    implementation::requires(ContractMode::Always, attr, toks).into()
 }
 
-/// Same as [`pre`], but uses `debug_assert!`.
+/// Same as [`requires`], but uses `debug_assert!`.
 ///
-/// [`pre`]: attr.pre.html
+/// [`requires`]: attr.requires.html
 #[proc_macro_attribute]
-pub fn debug_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub fn debug_requires(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let attr = attr.into();
     let toks = toks.into();
-    implementation::pre(ContractMode::Debug, attr, toks).into()
+    implementation::requires(ContractMode::Debug, attr, toks).into()
 }
 
-/// Same as [`pre`], but is only enabled in `#[cfg(test)]` environments.
+/// Same as [`requires`], but is only enabled in `#[cfg(test)]` environments.
 ///
-/// [`pre`]: attr.pre.html
+/// [`requires`]: attr.requires.html
 #[proc_macro_attribute]
-pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub fn test_requires(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let attr = attr.into();
     let toks = toks.into();
-    implementation::pre(ContractMode::Test, attr, toks).into()
+    implementation::requires(ContractMode::Test, attr, toks).into()
 }
 
 /// Post-conditions are checked after the function body is run.
@@ -217,7 +217,7 @@ pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 ///
 /// ```rust
 /// # use contracts::*;
-/// #[post(ret > x)]
+/// #[ensures(ret > x)]
 /// fn incr(x: usize) -> usize {
 ///     x + 1
 /// }
@@ -225,36 +225,36 @@ pub fn test_pre(attr: TokenStream, toks: TokenStream) -> TokenStream {
 ///
 /// ```rust
 /// # use contracts::*;
-/// #[post(*x == old(*x) + 1, "x is incremented")]
+/// #[ensures(*x == old(*x) + 1, "x is incremented")]
 /// fn incr(x: &mut usize) {
 ///     *x += 1;
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub fn ensures(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let attr = attr.into();
     let toks = toks.into();
-    implementation::post(ContractMode::Always, attr, toks).into()
+    implementation::ensures(ContractMode::Always, attr, toks).into()
 }
 
-/// Same as [`post`], but uses `debug_assert!`.
+/// Same as [`ensures`], but uses `debug_assert!`.
 ///
-/// [`post`]: attr.post.html
+/// [`ensures`]: attr.ensures.html
 #[proc_macro_attribute]
-pub fn debug_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub fn debug_ensures(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let attr = attr.into();
     let toks = toks.into();
-    implementation::post(ContractMode::Debug, attr, toks).into()
+    implementation::ensures(ContractMode::Debug, attr, toks).into()
 }
 
-/// Same as [`post`], but is only enabled in `#[cfg(test)]` environments.
+/// Same as [`ensures`], but is only enabled in `#[cfg(test)]` environments.
 ///
-/// [`post`]: attr.post.html
+/// [`ensures`]: attr.ensures.html
 #[proc_macro_attribute]
-pub fn test_post(attr: TokenStream, toks: TokenStream) -> TokenStream {
+pub fn test_ensures(attr: TokenStream, toks: TokenStream) -> TokenStream {
     let attr = attr.into();
     let toks = toks.into();
-    implementation::post(ContractMode::Test, attr, toks).into()
+    implementation::ensures(ContractMode::Test, attr, toks).into()
 }
 
 /// Invariants are conditions that have to be maintained at the "interface
@@ -352,8 +352,8 @@ pub fn test_invariant(attr: TokenStream, toks: TokenStream) -> TokenStream {
 /// # use contracts::*;
 /// #[contract_trait]
 /// trait MyRandom {
-///     #[pre(min < max)]
-///     #[post(min <= ret, ret <= max)]
+///     #[requires(min < max)]
+///     #[ensures(min <= ret, ret <= max)]
 ///     fn gen(min: f64, max: f64) -> f64;
 /// }
 ///

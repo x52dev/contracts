@@ -16,19 +16,19 @@ impl Library {
         self.available.contains(book_id) || self.lent.contains(book_id)
     }
 
-    #[debug_pre(!self.book_exists(book_id), "Book IDs are unique")]
-    #[debug_post(self.available.contains(book_id), "Book now available")]
-    #[post(self.available.len() == old(self.available.len()) + 1)]
-    #[post(self.lent.len() == old(self.lent.len()), "No lent change")]
+    #[debug_requires(!self.book_exists(book_id), "Book IDs are unique")]
+    #[debug_ensures(self.available.contains(book_id), "Book now available")]
+    #[ensures(self.available.len() == old(self.available.len()) + 1)]
+    #[ensures(self.lent.len() == old(self.lent.len()), "No lent change")]
     pub fn add_book(&mut self, book_id: &str) {
         self.available.insert(book_id.to_string());
     }
 
-    #[debug_pre(self.book_exists(book_id))]
-    #[post(ret -> self.available.len() == old(self.available.len()) - 1)]
-    #[post(ret -> self.lent.len() == old(self.lent.len()) + 1)]
-    #[debug_post(ret -> self.lent.contains(book_id))]
-    #[debug_post(!ret -> self.lent.contains(book_id), "Book already lent")]
+    #[debug_requires(self.book_exists(book_id))]
+    #[ensures(ret -> self.available.len() == old(self.available.len()) - 1)]
+    #[ensures(ret -> self.lent.len() == old(self.lent.len()) + 1)]
+    #[debug_ensures(ret -> self.lent.contains(book_id))]
+    #[debug_ensures(!ret -> self.lent.contains(book_id), "Book already lent")]
     pub fn lend(&mut self, book_id: &str) -> bool {
         if self.available.contains(book_id) {
             self.available.remove(book_id);
@@ -39,11 +39,11 @@ impl Library {
         }
     }
 
-    #[debug_pre(self.lent.contains(book_id), "Can't return a non-lent book")]
-    #[post(self.lent.len() == old(self.lent.len()) - 1)]
-    #[post(self.available.len() == old(self.available.len()) + 1)]
-    #[debug_post(!self.lent.contains(book_id))]
-    #[debug_post(self.available.contains(book_id), "Book available again")]
+    #[debug_requires(self.lent.contains(book_id), "Can't return a non-lent book")]
+    #[ensures(self.lent.len() == old(self.lent.len()) - 1)]
+    #[ensures(self.available.len() == old(self.available.len()) + 1)]
+    #[debug_ensures(!self.lent.contains(book_id))]
+    #[debug_ensures(self.available.contains(book_id), "Book available again")]
     pub fn return_book(&mut self, book_id: &str) {
         self.lent.remove(book_id);
         self.available.insert(book_id.to_string());

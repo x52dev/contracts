@@ -4,19 +4,19 @@
 
 pub(crate) mod codegen;
 pub(crate) mod doc;
+pub(crate) mod ensures;
 pub(crate) mod invariant;
 pub(crate) mod parse;
-pub(crate) mod post;
-pub(crate) mod pre;
+pub(crate) mod requires;
 pub(crate) mod traits;
 
 use quote::ToTokens;
 use syn::{Expr, ItemFn};
 
+pub(crate) use ensures::ensures;
 pub(crate) use invariant::invariant;
-pub(crate) use post::post;
-pub(crate) use pre::pre;
 use proc_macro2::{Span, TokenStream, TokenTree};
+pub(crate) use requires::requires;
 pub(crate) use traits::{contract_trait_item_impl, contract_trait_item_trait};
 
 /// Checking-mode of a contract.
@@ -75,8 +75,8 @@ impl ContractMode {
 /// The different contract types.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum ContractType {
-    Pre,
-    Post,
+    Requires,
+    Ensures,
     Invariant,
 }
 
@@ -85,8 +85,8 @@ impl ContractType {
     /// contract.
     pub(crate) fn message_name(self) -> &'static str {
         match self {
-            ContractType::Pre => "Pre-condition",
-            ContractType::Post => "Post-condition",
+            ContractType::Requires => "Pre-condition",
+            ContractType::Ensures => "Post-condition",
             ContractType::Invariant => "Invariant",
         }
     }
@@ -96,18 +96,24 @@ impl ContractType {
         ident: &str,
     ) -> Option<(ContractType, ContractMode)> {
         match ident {
-            "pre" => Some((ContractType::Pre, ContractMode::Always)),
-            "post" => Some((ContractType::Post, ContractMode::Always)),
+            "requires" => Some((ContractType::Requires, ContractMode::Always)),
+            "ensures" => Some((ContractType::Ensures, ContractMode::Always)),
             "invariant" => {
                 Some((ContractType::Invariant, ContractMode::Always))
             }
-            "debug_pre" => Some((ContractType::Pre, ContractMode::Debug)),
-            "debug_post" => Some((ContractType::Post, ContractMode::Debug)),
+            "debug_requires" => {
+                Some((ContractType::Requires, ContractMode::Debug))
+            }
+            "debug_ensures" => {
+                Some((ContractType::Ensures, ContractMode::Debug))
+            }
             "debug_invariant" => {
                 Some((ContractType::Invariant, ContractMode::Debug))
             }
-            "test_pre" => Some((ContractType::Pre, ContractMode::Test)),
-            "test_post" => Some((ContractType::Post, ContractMode::Test)),
+            "test_requires" => {
+                Some((ContractType::Requires, ContractMode::Test))
+            }
+            "test_ensures" => Some((ContractType::Ensures, ContractMode::Test)),
             "test_invariant" => {
                 Some((ContractType::Invariant, ContractMode::Test))
             }
