@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use crate::implementation::ContractType;
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::{
     FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod,
 };
@@ -21,18 +23,32 @@ pub(crate) fn contract_trait_item_trait(
     fn create_method_rename(method: &TraitItemMethod) -> TraitItemMethod {
         let mut m: TraitItemMethod = (*method).clone();
 
-        // transform method
+        // rename method and modify attributes
         {
             // remove any contracts attributes and rename
             let name = m.sig.ident.to_string();
 
             let new_name = contract_method_impl_name(&name);
 
-            m.attrs.clear();
-            m.attrs.push(syn::parse_quote!(#[doc(hidden)]));
-            m.attrs.push(syn::parse_quote!(#[doc = "This is an internal function that is not meant to be used directly!"]));
-            m.attrs.push(syn::parse_quote!(#[doc = "See the documentation of the `#[contract_trait]` attribute."]));
-            m.attrs.push(syn::parse_quote!(#[inline(always)]));
+            let mut new_attrs = vec![];
+            new_attrs.push(syn::parse_quote!(#[doc(hidden)]));
+            new_attrs.push(syn::parse_quote!(#[doc = "This is an internal function that is not meant to be used directly!"]));
+            new_attrs.push(syn::parse_quote!(#[doc = "See the documentation of the `#[contract_trait]` attribute."]));
+
+            // add all existing non-contract attributes
+            new_attrs.extend(
+                m.attrs
+                    .iter()
+                    .filter(|a| {
+                        let name =
+                            a.path.segments.last().unwrap().ident.to_string();
+
+                        ContractType::contract_type_and_mode(&name).is_none()
+                    })
+                    .cloned(),
+            );
+
+            m.attrs = new_attrs;
 
             m.sig.ident = syn::Ident::new(&new_name, m.sig.ident.span());
         }
@@ -113,14 +129,36 @@ pub(crate) fn contract_trait_item_trait(
             let name = contract_method_impl_name(&m.sig.ident.to_string());
             let name = syn::Ident::new(&name, m.sig.ident.span());
 
-            let toks = quote::quote! {
+            quote::quote! {
                 {
                     Self::#name(#arguments)
                 }
-            };
-
-            toks.into()
+            }
         };
+
+        let mut attrs = vec![];
+
+        // keep the documentation and contracts of the original method
+        attrs.extend(
+            m.attrs
+                .iter()
+                .filter(|a| {
+                    let name =
+                        a.path.segments.last().unwrap().ident.to_string();
+                    // is doc?
+                    if name == "doc" {
+                        return true;
+                    }
+
+                    // is contract?
+                    ContractType::contract_type_and_mode(&name).is_some()
+                })
+                .cloned(),
+        );
+        // always inline
+        attrs.push(syn::parse_quote!(#[inline(always)]));
+
+        m.attrs = attrs;
 
         {
             let block: syn::Block = syn::parse2(body).unwrap();
@@ -155,23 +193,13 @@ pub(crate) fn contract_trait_item_trait(
     trait_.items = trait_
         .items
         .into_iter()
-        .filter(|item| {
-            if let TraitItem::Method(_) = item {
-                false
-            } else {
-                true
-            }
-        })
+        .filter(|item| !matches!(item, TraitItem::Method(_)))
         .collect();
 
     // add back new methods
     trait_.items.extend(funcs);
 
-    let toks = quote::quote! {
-        #trait_
-    };
-
-    toks.into()
+    trait_.into_token_stream()
 }
 
 /// Rename all methods inside an `impl` to use the "internal implementation"
@@ -197,11 +225,7 @@ pub(crate) fn contract_trait_item_impl(
         impl_
     };
 
-    let toks = quote::quote! {
-        #new_impl
-    };
-
-    toks.into()
+    new_impl.to_token_stream()
 }
 
 #[cfg(test)]
@@ -214,54 +238,35 @@ mod tests {
 
         let code = syn::parse_quote! {
             trait Random {
+                /// Test!
                 #[aaa]
-                #[post((min..max).contains(ret))]
+                #[ensures((min..max).contains(ret))]
                 fn random_number(min: u8, max: u8) -> u8;
+            }
+        };
+
+        let expected = quote::quote! {
+            trait Random {
+                #[doc(hidden)]
+                #[doc = "This is an internal function that is not meant to be used directly!"]
+                #[doc = "See the documentation of the `#[contract_trait]` attribute."]
+                /// Test!
+                #[aaa]
+                fn __contracts_impl_random_number(min: u8, max: u8) -> u8;
+
+                /// Test!
+                #[ensures((min..max).contains(ret))]
+                #[inline(always)]
+                fn random_number(min: u8, max: u8) -> u8 {
+                    Self::__contracts_impl_random_number(min, max,)
+                }
             }
         };
 
         let generated =
             super::contract_trait_item_trait(Default::default(), code);
 
-        let generated_trait: syn::ItemTrait = syn::parse_quote!(#generated);
-
-        if let syn::TraitItem::Method(m) = &generated_trait.items[0] {
-            // This is the generated item, no user-defined attributes on it.
-            assert_ne!(m.sig.ident.to_string(), "random_number");
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("aaa")),
-                false
-            );
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("inline")),
-                true
-            );
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("doc")),
-                true
-            );
-        } else {
-            panic!()
-        }
-
-        if let syn::TraitItem::Method(m) = &generated_trait.items[1] {
-            // This is the "wrapper" item, contains all original attributes
-            assert_eq!(m.sig.ident.to_string(), "random_number");
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("aaa")),
-                true
-            );
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("post")),
-                true
-            );
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("doc")),
-                false
-            );
-        } else {
-            panic!()
-        }
+        assert_eq!(generated.to_string(), expected.to_string());
     }
 
     #[test]
@@ -279,28 +284,19 @@ mod tests {
             }
         };
 
+        let expected = quote::quote! {
+            impl Random for AlwaysMin {
+                /// docs for this function!
+                #[no_panic]
+                fn __contracts_impl_random_number(min: u8, max: u8) -> u8 {
+                    min
+                }
+            }
+        };
+
         let generated =
             super::contract_trait_item_impl(Default::default(), code);
 
-        let generated_trait: syn::ItemImpl = syn::parse_quote!(#generated);
-
-        if let syn::ImplItem::Method(m) = &generated_trait.items[0] {
-            // This is the generated item, has all user-defined attributes on it.
-            assert_ne!(m.sig.ident.to_string(), "random_number");
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("no_panic")),
-                true
-            );
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("inline")),
-                false
-            );
-            assert_eq!(
-                m.attrs.iter().any(|attr| attr.path.is_ident("doc")),
-                true
-            );
-        } else {
-            panic!()
-        }
+        assert_eq!(generated.to_string(), expected.to_string());
     }
 }
