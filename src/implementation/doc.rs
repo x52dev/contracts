@@ -16,7 +16,7 @@ pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
         let content_str = syn::LitStr::new(content, span);
 
         let toks: TokenStream =
-            quote::quote_spanned!( span=> #[doc = #content_str] ).into();
+            quote::quote_spanned!( span=> #[doc = #content_str] );
 
         let parser = Attribute::parse_outer;
 

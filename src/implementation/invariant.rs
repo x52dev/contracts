@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use syn::{FnArg, ImplItem, ImplItemMethod, Item, ItemFn, ItemImpl};
 
 use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
@@ -54,23 +55,18 @@ fn invariant_impl(
     let name = match mode.name() {
         Some(n) => n.to_string() + "invariant",
         None => {
-            return quote::quote!( #impl_def ).into();
+            return quote::quote!( #impl_def );
         }
     };
 
     let invariant_ident =
         syn::Ident::new(&name, proc_macro2::Span::call_site());
 
-    let invariant: proc_macro2::TokenStream = invariant.into();
-
     fn method_uses_self(method: &ImplItemMethod) -> bool {
         let inputs = &method.sig.inputs;
 
         if !inputs.is_empty() {
-            match inputs[0] {
-                FnArg::Receiver(_) => true,
-                _ => false,
-            }
+            matches!(inputs[0], FnArg::Receiver(_))
         } else {
             false
         }
@@ -94,8 +90,5 @@ fn invariant_impl(
         }
     }
 
-    let toks = quote::quote! {
-        #impl_def
-    };
-    toks.into()
+    impl_def.into_token_stream()
 }

@@ -203,7 +203,7 @@ impl FuncWithContracts {
                     TokenTree::Literal(l) => l.into_token_stream(),
                 };
 
-                Contract::from_toks(ty, mode, toks.into())
+                Contract::from_toks(ty, mode, toks)
             });
 
         contracts.extend(contract_attrs);

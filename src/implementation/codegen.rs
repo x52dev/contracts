@@ -244,7 +244,7 @@ pub(crate) fn generate(
                     make_assertion(
                         mode,
                         ContractType::Requires,
-                        display.clone().into(),
+                        display.clone(),
                         expr,
                         &desc.clone(),
                     )
@@ -282,7 +282,7 @@ pub(crate) fn generate(
                     make_assertion(
                         mode,
                         ContractType::Ensures,
-                        display.clone().into(),
+                        display.clone(),
                         expr,
                         &desc.clone(),
                     )
@@ -369,7 +369,5 @@ pub(crate) fn generate(
 
     func.function.block = Box::new(syn::parse_quote!(#new_block));
 
-    let res = func.function.into_token_stream();
-
-    res.into()
+    func.function.into_token_stream()
 }

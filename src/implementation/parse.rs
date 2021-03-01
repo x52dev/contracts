@@ -10,7 +10,7 @@ use syn::{Expr, ExprLit, Lit};
 pub(crate) fn parse_attributes(
     attrs: TokenStream,
 ) -> (Vec<Expr>, Vec<TokenStream>, Option<String>) {
-    let segments = segment_input(attrs.into());
+    let segments = segment_input(attrs);
     let mut segments_stream: Vec<TokenStream> = segments
         .iter()
         .map(|x| x.iter().cloned().collect::<TokenStream>())
@@ -42,9 +42,7 @@ pub(crate) fn parse_attributes(
         segments_stream.pop();
     }
 
-    let exprs = conds.into_iter().map(|e| e).collect();
-
-    (exprs, segments_stream, desc)
+    (conds, segments_stream, desc)
 }
 
 // This function rewrites a list of TokenTrees so that the "pseudooperator" for
@@ -156,7 +154,7 @@ fn rewrite(segments: Vec<TokenTree>) -> proc_macro2::TokenStream {
 
             quote::quote_spanned! {
                 span =>
-                (!(#lhs) || (#rhs))
+                (!(#lhs) || #rhs)
             }
         }
     }
