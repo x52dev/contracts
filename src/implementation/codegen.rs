@@ -321,18 +321,22 @@ pub(crate) fn generate(
 
     let block = func.function.block.clone();
 
-    let ret_ty = if let ReturnType::Type(_, ty) = &func.function.sig.output {
-        let span = ty.span();
-        quote::quote_spanned! { span=>
-            #ty
+    let ret_ty = match &func.function.sig.output {
+        ReturnType::Type(_, ty) => {
+            let span = ty.span();
+            match ty.as_ref() {
+                syn::Type::ImplTrait(_) => quote::quote! {},
+                ty => quote::quote_spanned! { span=>
+                    -> #ty
+                },
+            }
         }
-    } else {
-        quote::quote! { () }
+        ReturnType::Default => quote::quote! {},
     };
 
     let body = quote::quote! {
         #[allow(unused_mut)]
-        let mut run = || -> #ret_ty #block;
+        let mut run = || #ret_ty #block;
 
         let ret = run();
     };

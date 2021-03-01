@@ -41,7 +41,7 @@ fn test_sort() {
     fn sort(input: &[usize]) -> Vec<usize> {
         let mut vec = input.to_owned();
 
-        vec.sort();
+        vec.sort_unstable();
 
         vec
     }
@@ -87,4 +87,22 @@ fn test_early_return() {
     }
 
     abs(-4);
+}
+
+#[test]
+fn test_impl_trait_return() {
+    // make sure that compiling functions that return existentially
+    // qualified types works properly.
+
+    #[requires(x >= 10)]
+    fn impl_test(x: isize) -> impl Clone + std::fmt::Debug {
+        "it worked"
+    }
+
+    let x = impl_test(200);
+    let y = x.clone();
+    assert_eq!(
+        format!("{:?} and {:?}", x, y),
+        r#""it worked" and "it worked""#
+    );
 }
