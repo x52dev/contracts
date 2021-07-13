@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.6.1] - 2021-07-13
+
+### Added
+
+- support for `impl Trait` return types
+
 ## [0.6.0] - 2020-09-05
 ### Changed
 - `pre` is now `requires`
