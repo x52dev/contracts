@@ -90,12 +90,51 @@ fn test_early_return() {
 }
 
 #[test]
+fn test_mut_ref_and_lifetimes() {
+    #[requires(i < s.len())]
+    #[ensures(*ret == 0)]
+    fn insert_zero<'a>(s: &'a mut [u8], i: usize) -> &'a mut u8 {
+        s[i] = 0;
+        &mut s[i]
+    }
+
+    insert_zero(&mut [4, 2], 1);
+}
+
+#[test]
+fn test_pattern_match() {
+    #[ensures(ret > a && ret > b)]
+    fn add((a, b): (u8, u8)) -> u8 {
+        a.saturating_add(b)
+    }
+
+    assert_eq!(add((4, 2)), 6);
+}
+
+#[test]
 fn test_impl_trait_return() {
     // make sure that compiling functions that return existentially
     // qualified types works properly.
 
     #[requires(x >= 10)]
-    fn impl_test(x: isize) -> impl Clone + std::fmt::Debug {
+    #[ensures(ret.clone() == ret)]
+    fn impl_test(x: isize) -> impl Clone + PartialEq + std::fmt::Debug {
+        "it worked"
+    }
+
+    let x = impl_test(200);
+    let y = x.clone();
+    assert_eq!(
+        format!("{:?} and {:?}", x, y),
+        r#""it worked" and "it worked""#
+    );
+}
+
+#[test]
+fn test_impl_trait_arg() {
+    #[requires(x.clone() == x)]
+    #[ensures(ret.clone() == ret)]
+    fn impl_test(x: impl Clone + PartialEq + std::fmt::Debug) -> &'static str {
         "it worked"
     }
 

@@ -35,7 +35,7 @@ override_log = []
 mirai_assertions = []
 
 [dependencies]
-syn = { version = "1.0", features = ["extra-traits", "full", "visit-mut"] }
+syn = { version = "1.0", features = ["extra-traits", "full", "visit", "visit-mut"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 

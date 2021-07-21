@@ -316,29 +316,14 @@ pub(crate) fn generate(
     };
 
     //
-    // wrap the function body in a closure
+    // wrap the function body in a closure if we have any postconditions
     //
 
-    let block = func.function.block.clone();
-
-    let ret_ty = match &func.function.sig.output {
-        ReturnType::Type(_, ty) => {
-            let span = ty.span();
-            match ty.as_ref() {
-                syn::Type::ImplTrait(_) => quote::quote! {},
-                ty => quote::quote_spanned! { span=>
-                    -> #ty
-                },
-            }
-        }
-        ReturnType::Default => quote::quote! {},
-    };
-
-    let body = quote::quote! {
-        #[allow(unused_mut)]
-        let mut run = || #ret_ty #block;
-
-        let ret = run();
+    let body = if post.is_empty() {
+        let block = &func.function.block;
+        quote::quote! { let ret = #block; }
+    } else {
+        create_closure_body_and_adjust_signature(&func.function)
     };
 
     //
@@ -370,4 +355,158 @@ pub(crate) fn generate(
     func.function.block = Box::new(syn::parse_quote!(#new_block));
 
     func.function.into_token_stream()
+}
+
+struct SelfReplacer<'a> {
+    replace_with: &'a syn::Ident,
+}
+
+impl syn::visit_mut::VisitMut for SelfReplacer<'_> {
+    fn visit_ident_mut(&mut self, i: &mut Ident) {
+        if i == "self" {
+            *i = self.replace_with.clone();
+        }
+    }
+}
+
+fn ty_contains_impl_trait(ty: &syn::Type) -> bool {
+    use syn::visit::Visit;
+
+    struct TyContainsImplTrait {
+        seen_impl_trait: bool,
+    }
+
+    impl syn::visit::Visit<'_> for TyContainsImplTrait {
+        fn visit_type_impl_trait(&mut self, _: &syn::TypeImplTrait) {
+            self.seen_impl_trait = true;
+        }
+    }
+
+    let mut vis = TyContainsImplTrait {
+        seen_impl_trait: false,
+    };
+    vis.visit_type(ty);
+    vis.seen_impl_trait
+}
+
+fn create_closure_body_and_adjust_signature(func: &syn::ItemFn) -> TokenStream {
+    let is_method = func.sig.receiver().is_some();
+
+    // If the function has a receiver (e.g. `self`, `&mut self`, or `self: Box<Self>`) rename it
+    // to `this__` within the closure
+
+    let mut block = func.block.clone();
+    let mut closure_args = vec![];
+    let mut arg_names = vec![];
+
+    if is_method {
+        let this_ident = syn::Ident::new("this__", Span::call_site());
+
+        let mut receiver = func.sig.inputs[0].clone();
+        match receiver {
+            // self, &self, &mut self
+            syn::FnArg::Receiver(rcv) => {
+                // The `Self` type.
+                let self_ty = Box::new(syn::Type::Path(syn::TypePath {
+                    qself: None,
+                    path: syn::Path::from(syn::Ident::new("Self", rcv.span())),
+                }));
+
+                let ty = if let Some((and_token, ref lifetime)) = rcv.reference
+                {
+                    Box::new(syn::Type::Reference(syn::TypeReference {
+                        and_token,
+                        lifetime: lifetime.clone(),
+                        mutability: rcv.mutability,
+                        elem: self_ty,
+                    }))
+                } else {
+                    self_ty
+                };
+
+                let pat_mut = if rcv.reference.is_none() {
+                    rcv.mutability
+                } else {
+                    None
+                };
+
+                // this__: [& [mut]] Self
+                let new_rcv = syn::PatType {
+                    attrs: rcv.attrs.clone(),
+                    pat: Box::new(syn::Pat::Ident(syn::PatIdent {
+                        attrs: vec![],
+                        by_ref: None,
+                        mutability: pat_mut,
+                        ident: this_ident.clone(),
+                        subpat: None,
+                    })),
+                    colon_token: syn::Token![:](rcv.span()),
+                    ty,
+                };
+
+                receiver = syn::FnArg::Typed(new_rcv);
+            }
+
+            // self: Box<Self>
+            syn::FnArg::Typed(ref mut pat) => {
+                if let syn::Pat::Ident(ref mut ident) = *pat.pat {
+                    if ident.ident == "self" {
+                        ident.ident = this_ident.clone();
+                    }
+                }
+            }
+        }
+
+        closure_args.push(receiver);
+        arg_names.push(syn::Ident::new("self", Span::call_site()));
+
+        // Replace any references to `self` in the function body with references to `this__`.
+        syn::visit_mut::visit_block_mut(
+            &mut SelfReplacer {
+                replace_with: &this_ident,
+            },
+            &mut block,
+        );
+    }
+
+    // Replace any pattern matching in the function signature with placeholder identifiers.
+    // Pattern matching gets done in the closure instead.
+    let args = func.sig.inputs.iter().skip(if is_method { 1 } else { 0 });
+    for arg in args {
+        match arg {
+            syn::FnArg::Receiver(_) => unreachable!("Multiple receivers?"),
+
+            syn::FnArg::Typed(syn::PatType { pat, ty, .. }) => {
+                if !ty_contains_impl_trait(ty) {
+                    if let syn::Pat::Ident(ident) = &**pat {
+                        arg_names.push(ident.ident.clone());
+                        closure_args.push(arg.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    let ret_ty = match &func.sig.output {
+        ReturnType::Type(_, ty) => {
+            let span = ty.span();
+            match ty.as_ref() {
+                syn::Type::ImplTrait(_) => quote::quote! {},
+                ty => quote::quote_spanned! { span=>
+                    -> #ty
+                },
+            }
+        }
+        ReturnType::Default => quote::quote! {},
+    };
+
+    let closure_args = closure_args.iter();
+    let arg_names = arg_names.iter();
+
+    quote::quote! {
+        #[allow(unused_mut)]
+        let mut run = |#(#closure_args),*| #ret_ty #block;
+
+        let ret = run(#(#arg_names),*);
+    }
 }
