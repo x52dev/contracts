@@ -150,7 +150,7 @@ To install the latest version, add `contracts` to the dependency section of the
 
 ```
 [dependencies]
-contracts = "0.6.1"
+contracts = "0.6.2"
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;`

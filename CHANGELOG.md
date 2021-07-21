@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.6.2] - 2021-07-21
+
+### Changed
+
+- better handling of mutable borrows and lifetime relationships for functions
+  with contracts
+
 ## [0.6.1] - 2021-07-13
 
 ### Added
