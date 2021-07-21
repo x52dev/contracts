@@ -26,6 +26,15 @@ fn methods() {
             self.count += 2;
         }
 
+        // Manually express the invariant in terms of `ret` since `self.count` is mutably borrowed.
+        #[requires(is_even(self.count))]
+        #[ensures(is_even(*ret))]
+        #[ensures(*ret == old(self.count) + 2)]
+        fn next_even_and_get<'a>(&'a mut self) -> &'a mut usize {
+            self.count += 2;
+            &mut self.count
+        }
+
         #[invariant(is_even(self.count))]
         #[requires(self.count >= 2)]
         #[ensures(self.count == old(self.count) - 2)]
@@ -41,6 +50,8 @@ fn methods() {
 
     adder.prev_even();
     adder.prev_even();
+
+    assert_eq!(*adder.next_even_and_get(), 2);
 }
 
 #[test]
