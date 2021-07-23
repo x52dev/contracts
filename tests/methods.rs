@@ -41,6 +41,13 @@ fn methods() {
         fn prev_even(&mut self) {
             self.count -= 2;
         }
+
+        #[invariant(is_even(self.count))]
+        fn this_var_collision(&mut self) -> usize {
+            #[allow(unused_variables)]
+            let (this, this__) = (42, 42);
+            self.count
+        }
     }
 
     let mut adder = EvenAdder { count: 0 };
