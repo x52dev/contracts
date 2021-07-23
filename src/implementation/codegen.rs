@@ -323,7 +323,7 @@ pub(crate) fn generate(
         let block = &func.function.block;
         quote::quote! { let ret = #block; }
     } else {
-        create_closure_body_and_adjust_signature(&func.function)
+        create_body_closure(&func.function)
     };
 
     //
@@ -389,18 +389,20 @@ fn ty_contains_impl_trait(ty: &syn::Type) -> bool {
     vis.seen_impl_trait
 }
 
-fn create_closure_body_and_adjust_signature(func: &syn::ItemFn) -> TokenStream {
+fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
     let is_method = func.sig.receiver().is_some();
 
     // If the function has a receiver (e.g. `self`, `&mut self`, or `self: Box<Self>`) rename it
-    // to `this__` within the closure
+    // to `this` within the closure
 
     let mut block = func.block.clone();
     let mut closure_args = vec![];
     let mut arg_names = vec![];
 
     if is_method {
-        let this_ident = syn::Ident::new("this__", Span::call_site());
+        // `mixed_site` makes the identifier hygienic so it won't collide with a local variable
+        // named `this`.
+        let this_ident = syn::Ident::new("this", Span::mixed_site());
 
         let mut receiver = func.sig.inputs[0].clone();
         match receiver {
@@ -430,7 +432,7 @@ fn create_closure_body_and_adjust_signature(func: &syn::ItemFn) -> TokenStream {
                     None
                 };
 
-                // this__: [& [mut]] Self
+                // this: [& [mut]] Self
                 let new_rcv = syn::PatType {
                     attrs: rcv.attrs.clone(),
                     pat: Box::new(syn::Pat::Ident(syn::PatIdent {
@@ -460,7 +462,7 @@ fn create_closure_body_and_adjust_signature(func: &syn::ItemFn) -> TokenStream {
         closure_args.push(receiver);
         arg_names.push(syn::Ident::new("self", Span::call_site()));
 
-        // Replace any references to `self` in the function body with references to `this__`.
+        // Replace any references to `self` in the function body with references to `this`.
         syn::visit_mut::visit_block_mut(
             &mut SelfReplacer {
                 replace_with: &this_ident,
@@ -469,8 +471,9 @@ fn create_closure_body_and_adjust_signature(func: &syn::ItemFn) -> TokenStream {
         );
     }
 
-    // Replace any pattern matching in the function signature with placeholder identifiers.
-    // Pattern matching gets done in the closure instead.
+    // Any function arguments of the form `ident: ty` become closure arguments and get passed
+    // explicitly. More complex ones, e.g. pattern matching like `(a, b): (u32, u32)`, are
+    // captured instead.
     let args = func.sig.inputs.iter().skip(if is_method { 1 } else { 0 });
     for arg in args {
         match arg {
