@@ -188,7 +188,7 @@ pub(crate) fn generate(
             result.extend(
                 quote::quote_spanned! { span=>
                     if !(#exec_expr) {
-                        log::error!(#format_args);
+                        log::error!("{}", #format_args);
                     }
                 }
                 .into_iter(),
@@ -198,7 +198,7 @@ pub(crate) fn generate(
         if let Some(assert_macro) = get_assert_macro(ctype, mode, span) {
             result.extend(
                 quote::quote_spanned! { span=>
-                    #assert_macro!(#exec_expr, #format_args);
+                    #assert_macro!(#exec_expr, "{}", #format_args);
                 }
                 .into_iter(),
             );
@@ -460,7 +460,21 @@ fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
         }
 
         closure_args.push(receiver);
-        arg_names.push(syn::Ident::new("self", Span::call_site()));
+
+        match &func.sig.inputs[0] {
+            syn::FnArg::Receiver(receiver) => {
+                arg_names
+                    .push(syn::Ident::new("self", receiver.self_token.span()));
+            }
+            syn::FnArg::Typed(pat) => {
+                if let syn::Pat::Ident(ident) = &*pat.pat {
+                    arg_names.push(ident.ident.clone());
+                } else {
+                    // Non-trivial receiver pattern => do not capture
+                    closure_args.pop();
+                }
+            }
+        };
 
         // Replace any references to `self` in the function body with references to `this`.
         syn::visit_mut::visit_block_mut(
@@ -482,8 +496,16 @@ fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
             syn::FnArg::Typed(syn::PatType { pat, ty, .. }) => {
                 if !ty_contains_impl_trait(ty) {
                     if let syn::Pat::Ident(ident) = &**pat {
-                        arg_names.push(ident.ident.clone());
-                        closure_args.push(arg.clone());
+                        let ident_str = ident.ident.to_string();
+
+                        // Any function argument identifier starting with '_' signals
+                        // that the binding will not be used.
+                        if !ident_str.starts_with('_')
+                            || ident_str.starts_with("__")
+                        {
+                            arg_names.push(ident.ident.clone());
+                            closure_args.push(arg.clone());
+                        }
                     }
                 }
             }

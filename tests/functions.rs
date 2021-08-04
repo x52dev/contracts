@@ -117,7 +117,8 @@ fn test_impl_trait_return() {
     // qualified types works properly.
 
     #[requires(x >= 10)]
-    #[ensures(ret.clone() == ret)]
+    #[ensures(Clone::clone(&ret) == ret)]
+    #[allow(unused_variables)]
     fn impl_test(x: isize) -> impl Clone + PartialEq + std::fmt::Debug {
         "it worked"
     }
@@ -132,16 +133,37 @@ fn test_impl_trait_return() {
 
 #[test]
 fn test_impl_trait_arg() {
-    #[requires(x.clone() == x)]
-    #[ensures(ret.clone() == ret)]
+    #[requires(Clone::clone(&x) == x)]
+    #[ensures(Clone::clone(&ret) == ret)]
     fn impl_test(x: impl Clone + PartialEq + std::fmt::Debug) -> &'static str {
         "it worked"
     }
 
     let x = impl_test(200);
-    let y = x.clone();
+    let y = Clone::clone(&x);
     assert_eq!(
         format!("{:?} and {:?}", x, y),
         r#""it worked" and "it worked""#
     );
+}
+
+#[test]
+#[deny(clippy::used_underscore_binding)]
+fn test_unbound_parameters_clippy() {
+    #[requires(__y == 3)]
+    #[ensures(ret)]
+    fn param_test(_x: i32, __y: i32) -> bool {
+        true
+    }
+}
+
+#[test]
+#[deny(non_fmt_panic)]
+fn test_braced_condition_expression_clippy() {
+    #[requires(if __y == 3 {
+        __y != 0
+    } else {
+        false
+    })]
+    fn param_test(_x: i32, __y: i32) {}
 }
