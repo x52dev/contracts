@@ -101,3 +101,37 @@ fn impl_invariant() {
     adder.prev_even();
     adder.prev_even();
 }
+
+#[test]
+fn test_self_macro_hygiene() {
+    struct S {
+        value: i32,
+    }
+
+    // Use a macro to generate the function impl
+    // This requires strict hygiene of the `self` receiver
+    macro_rules! __impl {
+        (
+            $(#[$metas:meta])*
+            fn $function:ident(&mut $this:ident, $value:ident: $ty:ty)
+            $body:block
+        ) => {
+            $(#[$metas])*
+            fn $function(&mut $this, $value: $ty)
+            $body
+        };
+    }
+
+    impl S {
+        __impl! {
+            #[ensures(self.value == old(value))]
+            fn set_value(&mut self, value: i32) {
+                self.value = value;
+            }
+        }
+    }
+
+    let mut s = S { value: 24 };
+    s.set_value(42);
+    assert_eq!(s.value, 42);
+}

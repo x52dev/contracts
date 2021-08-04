@@ -53,6 +53,7 @@ fn test_requires_implication() {
 #[should_panic(expected = "Post")]
 fn test_failing_implication() {
     #[ensures(t -> ret)]
+    #[allow(unused_variables)]
     fn only_true(t: bool) -> bool {
         false // oops
     }

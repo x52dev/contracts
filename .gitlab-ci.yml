@@ -18,10 +18,17 @@ test-stable:
     - cargo test --all
 
 
-
 test-nightly:
   stage: test
   image: rustlang/rust:nightly
   script:
     - cargo test --all
   allow_failure: true
+
+clippy-tests-stable:
+  stage: test
+  image: rust:latest
+  before_script:
+    - rustup component add clippy
+  script:
+    - cargo clippy --tests
