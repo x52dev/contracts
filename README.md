@@ -5,7 +5,7 @@
 ![Lines of Code][loc]
 
 [license]: https://img.shields.io/badge/license-MPL%202.0-blue.svg
-[build]: https://gitlab.com/karroffel/contracts/badges/master/build.svg
+[build]: https://gitlab.com/karroffel/contracts/badges/master/pipeline.svg
 [loc]: https://tokei.rs/b1/gitlab/karroffel/contracts?category=code
 
 Annotate functions and methods with "contracts", using *invariants*,
@@ -150,7 +150,7 @@ To install the latest version, add `contracts` to the dependency section of the
 
 ```
 [dependencies]
-contracts = "0.6.2"
+contracts = "0.6.3"
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;`

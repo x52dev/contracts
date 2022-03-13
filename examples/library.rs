@@ -60,7 +60,7 @@ fn main() {
     println!("Adding a book.");
 
     let lent_successful = lib.lend("Das Kapital");
-    assert_eq!(lent_successful, true);
+    assert!(lent_successful);
 
     if lent_successful {
         println!("Lent out the book.");

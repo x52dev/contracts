@@ -158,7 +158,7 @@ fn test_unbound_parameters_clippy() {
 }
 
 #[test]
-#[deny(non_fmt_panic)]
+#[deny(non_fmt_panics)]
 fn test_braced_condition_expression_clippy() {
     #[requires(if __y == 3 {
         __y != 0

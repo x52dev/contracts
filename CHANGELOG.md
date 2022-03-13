@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.6.3] - 2022-03-13
+
+### Fixed
+
+- improved hygiene around `self` parameters
+- fix contract messages containing `{}` emitting warnings as they are interpreted as format strings
+
 ## [0.6.2] - 2021-07-21
 
 ### Changed

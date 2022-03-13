@@ -125,7 +125,7 @@ impl ContractType {
 /// Representation of a contract
 #[derive(Debug)]
 pub(crate) struct Contract {
-    pub(crate) span: Span,
+    pub(crate) _span: Span,
     pub(crate) ty: ContractType,
     pub(crate) mode: ContractMode,
     pub(crate) assertions: Vec<Expr>,
@@ -144,7 +144,7 @@ impl Contract {
         let span = Span::call_site();
 
         Self {
-            span,
+            _span: span,
             ty,
             mode,
             assertions,
@@ -210,7 +210,7 @@ impl FuncWithContracts {
 
         // remove contract attributes
         {
-            let attrs = std::mem::replace(&mut func.attrs, vec![]);
+            let attrs = std::mem::take(&mut func.attrs);
 
             let other_attrs = attrs
                 .into_iter()
