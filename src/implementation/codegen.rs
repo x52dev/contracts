@@ -226,15 +226,19 @@ pub(crate) fn generate(
             c.ty == ContractType::Requires || c.ty == ContractType::Invariant
         })
         .flat_map(|c| {
+            let contract_type_name = if c.ty == ContractType::Invariant {
+                format!("{} (as pre-condition)", c.ty.message_name())
+            } else {
+                format!("{}", c.ty.message_name())
+            };
+
             let desc = if let Some(desc) = c.desc.as_ref() {
                 format!(
                     "{} of {} violated: {}",
-                    c.ty.message_name(),
-                    func_name,
-                    desc
+                    contract_type_name, func_name, desc
                 )
             } else {
-                format!("{} of {} violated", c.ty.message_name(), func_name)
+                format!("{} of {} violated", contract_type_name, func_name)
             };
 
             c.assertions.iter().zip(c.streams.iter()).map(
@@ -264,15 +268,19 @@ pub(crate) fn generate(
             c.ty == ContractType::Ensures || c.ty == ContractType::Invariant
         })
         .flat_map(|c| {
+            let contract_type_name = if c.ty == ContractType::Invariant {
+                format!("{} (as post-condition)", c.ty.message_name())
+            } else {
+                format!("{}", c.ty.message_name())
+            };
+
             let desc = if let Some(desc) = c.desc.as_ref() {
                 format!(
                     "{} of {} violated: {}",
-                    c.ty.message_name(),
-                    func_name,
-                    desc
+                    contract_type_name, func_name, desc
                 )
             } else {
-                format!("{} of {} violated", c.ty.message_name(), func_name)
+                format!("{} of {} violated", contract_type_name, func_name)
             };
 
             c.assertions.iter().zip(c.streams.iter()).map(
