@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::ToTokens;
 use syn::{
     spanned::Spanned, visit_mut as visitor, Attribute, Expr, ExprCall,
-    ReturnType,
+    ReturnType, TypeImplTrait,
 };
 
 use crate::implementation::{
@@ -226,15 +226,19 @@ pub(crate) fn generate(
             c.ty == ContractType::Requires || c.ty == ContractType::Invariant
         })
         .flat_map(|c| {
+            let contract_type_name = if c.ty == ContractType::Invariant {
+                format!("{} (as pre-condition)", c.ty.message_name())
+            } else {
+                format!("{}", c.ty.message_name())
+            };
+
             let desc = if let Some(desc) = c.desc.as_ref() {
                 format!(
                     "{} of {} violated: {}",
-                    c.ty.message_name(),
-                    func_name,
-                    desc
+                    contract_type_name, func_name, desc
                 )
             } else {
-                format!("{} of {} violated", c.ty.message_name(), func_name)
+                format!("{} of {} violated", contract_type_name, func_name)
             };
 
             c.assertions.iter().zip(c.streams.iter()).map(
@@ -264,15 +268,19 @@ pub(crate) fn generate(
             c.ty == ContractType::Ensures || c.ty == ContractType::Invariant
         })
         .flat_map(|c| {
+            let contract_type_name = if c.ty == ContractType::Invariant {
+                format!("{} (as post-condition)", c.ty.message_name())
+            } else {
+                format!("{}", c.ty.message_name())
+            };
+
             let desc = if let Some(desc) = c.desc.as_ref() {
                 format!(
                     "{} of {} violated: {}",
-                    c.ty.message_name(),
-                    func_name,
-                    desc
+                    contract_type_name, func_name, desc
                 )
             } else {
-                format!("{} of {} violated", c.ty.message_name(), func_name)
+                format!("{} of {} violated", contract_type_name, func_name)
             };
 
             c.assertions.iter().zip(c.streams.iter()).map(
@@ -316,14 +324,28 @@ pub(crate) fn generate(
     };
 
     //
-    // wrap the function body in a closure if we have any postconditions
+    // wrap the function body in a block so that we can use its return value
     //
 
-    let body = if post.is_empty() {
-        let block = &func.function.block;
-        quote::quote! { let ret = #block; }
-    } else {
-        create_body_closure(&func.function)
+    let body = 'blk: {
+        let mut block = func.function.block.clone();
+        syn::visit_mut::visit_block_mut(&mut ReturnReplacer, &mut block);
+
+        let mut impl_detector = ImplDetector { found_impl: false };
+        syn::visit::visit_return_type(
+            &mut impl_detector,
+            &func.function.sig.output,
+        );
+
+        if !impl_detector.found_impl {
+            if let ReturnType::Type(.., ref return_type) =
+                func.function.sig.output
+            {
+                break 'blk quote::quote! { let ret: #return_type = 'run: #block; };
+            }
+        }
+
+        quote::quote! { let ret = 'run: #block; }
     };
 
     //
@@ -357,181 +379,25 @@ pub(crate) fn generate(
     func.function.into_token_stream()
 }
 
-struct SelfReplacer<'a> {
-    replace_with: &'a syn::Ident,
-}
+struct ReturnReplacer;
 
-impl syn::visit_mut::VisitMut for SelfReplacer<'_> {
-    fn visit_ident_mut(&mut self, i: &mut Ident) {
-        if i == "self" {
-            *i = self.replace_with.clone();
+impl syn::visit_mut::VisitMut for ReturnReplacer {
+    fn visit_expr_mut(&mut self, node: &mut Expr) {
+        if let Expr::Return(ret_expr) = node {
+            let ret_expr_expr = ret_expr.expr.clone();
+            *node = syn::parse_quote!(break 'run #ret_expr_expr);
         }
+
+        syn::visit_mut::visit_expr_mut(self, node);
     }
 }
 
-fn ty_contains_impl_trait(ty: &syn::Type) -> bool {
-    use syn::visit::Visit;
-
-    struct TyContainsImplTrait {
-        seen_impl_trait: bool,
-    }
-
-    impl syn::visit::Visit<'_> for TyContainsImplTrait {
-        fn visit_type_impl_trait(&mut self, _: &syn::TypeImplTrait) {
-            self.seen_impl_trait = true;
-        }
-    }
-
-    let mut vis = TyContainsImplTrait {
-        seen_impl_trait: false,
-    };
-    vis.visit_type(ty);
-    vis.seen_impl_trait
+struct ImplDetector {
+    found_impl: bool,
 }
 
-fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
-    let is_method = func.sig.receiver().is_some();
-
-    // If the function has a receiver (e.g. `self`, `&mut self`, or `self: Box<Self>`) rename it
-    // to `this` within the closure
-
-    let mut block = func.block.clone();
-    let mut closure_args = vec![];
-    let mut arg_names = vec![];
-
-    if is_method {
-        // `mixed_site` makes the identifier hygienic so it won't collide with a local variable
-        // named `this`.
-        let this_ident = syn::Ident::new("this", Span::mixed_site());
-
-        let mut receiver = func.sig.inputs[0].clone();
-        match receiver {
-            // self, &self, &mut self
-            syn::FnArg::Receiver(rcv) => {
-                // The `Self` type.
-                let self_ty = Box::new(syn::Type::Path(syn::TypePath {
-                    qself: None,
-                    path: syn::Path::from(syn::Ident::new("Self", rcv.span())),
-                }));
-
-                let ty = if let Some((and_token, ref lifetime)) = rcv.reference
-                {
-                    Box::new(syn::Type::Reference(syn::TypeReference {
-                        and_token,
-                        lifetime: lifetime.clone(),
-                        mutability: rcv.mutability,
-                        elem: self_ty,
-                    }))
-                } else {
-                    self_ty
-                };
-
-                let pat_mut = if rcv.reference.is_none() {
-                    rcv.mutability
-                } else {
-                    None
-                };
-
-                // this: [& [mut]] Self
-                let new_rcv = syn::PatType {
-                    attrs: rcv.attrs.clone(),
-                    pat: Box::new(syn::Pat::Ident(syn::PatIdent {
-                        attrs: vec![],
-                        by_ref: None,
-                        mutability: pat_mut,
-                        ident: this_ident.clone(),
-                        subpat: None,
-                    })),
-                    colon_token: syn::Token![:](rcv.span()),
-                    ty,
-                };
-
-                receiver = syn::FnArg::Typed(new_rcv);
-            }
-
-            // self: Box<Self>
-            syn::FnArg::Typed(ref mut pat) => {
-                if let syn::Pat::Ident(ref mut ident) = *pat.pat {
-                    if ident.ident == "self" {
-                        ident.ident = this_ident.clone();
-                    }
-                }
-            }
-        }
-
-        closure_args.push(receiver);
-
-        match &func.sig.inputs[0] {
-            syn::FnArg::Receiver(receiver) => {
-                arg_names
-                    .push(syn::Ident::new("self", receiver.self_token.span()));
-            }
-            syn::FnArg::Typed(pat) => {
-                if let syn::Pat::Ident(ident) = &*pat.pat {
-                    arg_names.push(ident.ident.clone());
-                } else {
-                    // Non-trivial receiver pattern => do not capture
-                    closure_args.pop();
-                }
-            }
-        };
-
-        // Replace any references to `self` in the function body with references to `this`.
-        syn::visit_mut::visit_block_mut(
-            &mut SelfReplacer {
-                replace_with: &this_ident,
-            },
-            &mut block,
-        );
-    }
-
-    // Any function arguments of the form `ident: ty` become closure arguments and get passed
-    // explicitly. More complex ones, e.g. pattern matching like `(a, b): (u32, u32)`, are
-    // captured instead.
-    let args = func.sig.inputs.iter().skip(if is_method { 1 } else { 0 });
-    for arg in args {
-        match arg {
-            syn::FnArg::Receiver(_) => unreachable!("Multiple receivers?"),
-
-            syn::FnArg::Typed(syn::PatType { pat, ty, .. }) => {
-                if !ty_contains_impl_trait(ty) {
-                    if let syn::Pat::Ident(ident) = &**pat {
-                        let ident_str = ident.ident.to_string();
-
-                        // Any function argument identifier starting with '_' signals
-                        // that the binding will not be used.
-                        if !ident_str.starts_with('_')
-                            || ident_str.starts_with("__")
-                        {
-                            arg_names.push(ident.ident.clone());
-                            closure_args.push(arg.clone());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    let ret_ty = match &func.sig.output {
-        ReturnType::Type(_, ty) => {
-            let span = ty.span();
-            match ty.as_ref() {
-                syn::Type::ImplTrait(_) => quote::quote! {},
-                ty => quote::quote_spanned! { span=>
-                    -> #ty
-                },
-            }
-        }
-        ReturnType::Default => quote::quote! {},
-    };
-
-    let closure_args = closure_args.iter();
-    let arg_names = arg_names.iter();
-
-    quote::quote! {
-        #[allow(unused_mut)]
-        let mut run = |#(#closure_args),*| #ret_ty #block;
-
-        let ret = run(#(#arg_names),*);
+impl<'a> syn::visit::Visit<'a> for ImplDetector {
+    fn visit_type_impl_trait(&mut self, _node: &'a TypeImplTrait) {
+        self.found_impl = true;
     }
 }
