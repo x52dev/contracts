@@ -12,7 +12,6 @@ fn gl_issue_11() {
 
         #[ensures(self.contains_key(key) -> ret.is_some())]
         #[ensures(!self.contains_key(key) -> ret.is_none())]
-        #[ensures(true)]
         pub fn get_mut(&mut self, key: &str) -> Option<&mut u8> {
             None
         }

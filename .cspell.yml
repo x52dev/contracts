@@ -6,6 +6,7 @@ words:
   - nextest
   - nixos
   - nixpkgs
+  - nonminimal
   - pkgs
   - RUSTDOCFLAGS
   - taplo

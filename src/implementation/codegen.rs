@@ -185,15 +185,20 @@ pub(crate) fn generate(
 
         if mode == ContractMode::LogOnly {
             result.extend(quote::quote_spanned! { span=>
-                if !(#exec_expr) {
-                    log::error!("{}", #format_args);
+                #[allow(clippy::nonminimal_bool)]
+                {
+                    if !(#exec_expr) {
+                        log::error!("{}", #format_args);
+                    }
                 }
             });
         }
 
         if let Some(assert_macro) = get_assert_macro(ctype, mode, span) {
             result.extend(quote::quote_spanned! { span=>
-                #assert_macro!(#exec_expr, "{}", #format_args);
+                #[allow(clippy::nonminimal_bool)] {
+                    #assert_macro!(#exec_expr, "{}", #format_args);
+                }
             });
         }
 
