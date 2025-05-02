@@ -52,6 +52,7 @@ test-msrv: downgrade-for-msrv
     @just toolchain={{ msrv_rustup }} test-no-coverage
 
     # Test workspace and generate Codecov coverage file
+
 test-coverage-codecov:
     cargo {{ toolchain }} llvm-cov --workspace --all-features --codecov --output-path codecov.json
 

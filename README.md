@@ -127,19 +127,11 @@ All the attributes (requires, ensures, invariant) have `debug_*` and `test_*` ve
 
 To install the latest version, add `contracts` to the dependency section of the `Cargo.toml` file.
 
-```
-[dependencies]
-contracts = "0.6.3"
+```shell
+$ cargo add contracts
 ```
 
 To then bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan to use the contract attributes.
-
-Alternatively use the "old-style" of importing macros to have them available project-wide.
-
-```rust
-#[macro_use]
-extern crate contracts;
-```
 
 ## Configuration
 
