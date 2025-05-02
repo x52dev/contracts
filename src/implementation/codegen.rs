@@ -180,23 +180,17 @@ pub(crate) fn generate(
         };
 
         if mode == ContractMode::LogOnly {
-            result.extend(
-                quote::quote_spanned! { span=>
-                    if !(#exec_expr) {
-                        log::error!("{}", #format_args);
-                    }
+            result.extend(quote::quote_spanned! { span=>
+                if !(#exec_expr) {
+                    log::error!("{}", #format_args);
                 }
-                .into_iter(),
-            );
+            });
         }
 
         if let Some(assert_macro) = get_assert_macro(ctype, mode, span) {
-            result.extend(
-                quote::quote_spanned! { span=>
-                    #assert_macro!(#exec_expr, "{}", #format_args);
-                }
-                .into_iter(),
-            );
+            result.extend(quote::quote_spanned! { span=>
+                #assert_macro!(#exec_expr, "{}", #format_args);
+            });
         }
 
         if mode == ContractMode::Test {

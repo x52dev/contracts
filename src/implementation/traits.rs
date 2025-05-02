@@ -181,11 +181,9 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
         .collect::<Vec<_>>();
 
     // remove all previous methods
-    trait_.items = trait_
+    trait_
         .items
-        .into_iter()
-        .filter(|item| !matches!(item, TraitItem::Method(_)))
-        .collect();
+        .retain(|item| !matches!(item, TraitItem::Method(_)));
 
     // add back new methods
     trait_.items.extend(funcs);
