@@ -1,0 +1,85 @@
+name: Lint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+
+      - name: Format Check
+        uses: actions-rust-lang/rustfmt@v1
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+
+      - name: Clippy Check
+        uses: giraffate/clippy-action@v1
+        with:
+          clippy_flags: --workspace --all-targets --all-features
+          reporter: github-pr-check
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
+        with:
+          components: rust-docs
+
+      - name: Validate Intra-doc Links
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps --all-features
+
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2.49.28
+        with:
+          tool: cargo-deny
+
+      - name: Audit check
+        run: cargo deny --all-features check advisories

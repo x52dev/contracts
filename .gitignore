@@ -1,4 +1,12 @@
 /target
+
+# rust
+/target/
 **/*.rs.bk
-Cargo.lock
-.idea
+
+# direnv
+/.direnv/
+
+# code coverage
+/codecov.json
+/lcov.info

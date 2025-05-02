@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  read_msrv:
+    name: Read MSRV
+    uses: actions-rust-lang/msrv/.github/workflows/msrv.yml@main
+
+  test:
+    needs: read_msrv
+
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - { name: msrv, version: "${{ needs.read_msrv.outputs.msrv }}" }
+          - { name: stable, version: stable }
+
+    runs-on: ubuntu-latest
+
+    name: Test / ${{ matrix.toolchain.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Install Rust (${{ matrix.toolchain.name }})
+        uses: actions-rust-lang/setup-rust-toolchain@v1.5.0
+        with:
+          toolchain: ${{ matrix.toolchain.version }}
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2.49.28
+        with:
+          tool: cargo-nextest
+
+      - name: Enter Nix devshell
+        uses: nicknovitski/nix-develop@v1.2.1
+
+      - name: Downgrade for MSRV
+        if: matrix.toolchain.name == 'msrv'
+        run: just downgrade-for-msrv
+
+      - name: Test
+        run: just test-no-coverage
