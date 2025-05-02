@@ -2,3 +2,7 @@ version: "0.2"
 words:
   - clippy
   - direnv
+  - nixos
+  - nixpkgs
+  - pkgs
+  - taplo

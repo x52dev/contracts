@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use crate::implementation::{Contract, ContractMode};
-use proc_macro2::Span;
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use syn::{parse::Parser, Attribute};
+
+use crate::implementation::{Contract, ContractMode};
 
 pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
     let mut attrs = vec![];
@@ -15,8 +15,7 @@ pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
 
         let content_str = syn::LitStr::new(content, span);
 
-        let toks: TokenStream =
-            quote::quote_spanned!( span=> #[doc = #content_str] );
+        let toks: TokenStream = quote::quote_spanned!( span=> #[doc = #content_str] );
 
         let parser = Attribute::parse_outer;
 
@@ -53,13 +52,8 @@ pub(crate) fn generate_attributes(contracts: &[Contract]) -> Vec<Attribute> {
 
             attrs.push(make_attribute(&header_txt));
 
-            for (_assert, stream) in
-                contract.assertions.iter().zip(contract.streams.iter())
-            {
-                attrs.push(make_attribute(&format!(
-                    " - `{}`",
-                    print_stream(stream)
-                )));
+            for (_assert, stream) in contract.assertions.iter().zip(contract.streams.iter()) {
+                attrs.push(make_attribute(&format!(" - `{}`", print_stream(stream))));
             }
 
             attrs.push(make_attribute(""));

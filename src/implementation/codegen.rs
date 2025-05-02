@@ -4,14 +4,9 @@
 
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::ToTokens;
-use syn::{
-    spanned::Spanned, visit_mut as visitor, Attribute, Expr, ExprCall,
-    ReturnType,
-};
+use syn::{spanned::Spanned, visit_mut as visitor, Attribute, Expr, ExprCall, ReturnType};
 
-use crate::implementation::{
-    Contract, ContractMode, ContractType, FuncWithContracts,
-};
+use crate::implementation::{Contract, ContractMode, ContractType, FuncWithContracts};
 
 /// Substitution for `old()` expressions.
 pub(crate) struct OldExpr {
@@ -222,9 +217,7 @@ pub(crate) fn generate(
     let pre: proc_macro2::TokenStream = func
         .contracts
         .iter()
-        .filter(|c| {
-            c.ty == ContractType::Requires || c.ty == ContractType::Invariant
-        })
+        .filter(|c| c.ty == ContractType::Requires || c.ty == ContractType::Invariant)
         .flat_map(|c| {
             let desc = if let Some(desc) = c.desc.as_ref() {
                 format!(
@@ -237,8 +230,10 @@ pub(crate) fn generate(
                 format!("{} of {} violated", c.ty.message_name(), func_name)
             };
 
-            c.assertions.iter().zip(c.streams.iter()).map(
-                move |(expr, display)| {
+            c.assertions
+                .iter()
+                .zip(c.streams.iter())
+                .map(move |(expr, display)| {
                     let mode = c.mode.final_mode();
 
                     make_assertion(
@@ -248,8 +243,7 @@ pub(crate) fn generate(
                         expr,
                         &desc.clone(),
                     )
-                },
-            )
+                })
         })
         .collect();
 
@@ -260,9 +254,7 @@ pub(crate) fn generate(
     let post: proc_macro2::TokenStream = func
         .contracts
         .iter()
-        .filter(|c| {
-            c.ty == ContractType::Ensures || c.ty == ContractType::Invariant
-        })
+        .filter(|c| c.ty == ContractType::Ensures || c.ty == ContractType::Invariant)
         .flat_map(|c| {
             let desc = if let Some(desc) = c.desc.as_ref() {
                 format!(
@@ -275,8 +267,10 @@ pub(crate) fn generate(
                 format!("{} of {} violated", c.ty.message_name(), func_name)
             };
 
-            c.assertions.iter().zip(c.streams.iter()).map(
-                move |(expr, display)| {
+            c.assertions
+                .iter()
+                .zip(c.streams.iter())
+                .map(move |(expr, display)| {
                     let mode = c.mode.final_mode();
 
                     make_assertion(
@@ -286,8 +280,7 @@ pub(crate) fn generate(
                         expr,
                         &desc.clone(),
                     )
-                },
-            )
+                })
         })
         .collect();
 
@@ -414,8 +407,7 @@ fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
                     path: syn::Path::from(syn::Ident::new("Self", rcv.span())),
                 }));
 
-                let ty = if let Some((and_token, ref lifetime)) = rcv.reference
-                {
+                let ty = if let Some((and_token, ref lifetime)) = rcv.reference {
                     Box::new(syn::Type::Reference(syn::TypeReference {
                         and_token,
                         lifetime: lifetime.clone(),
@@ -463,8 +455,7 @@ fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
 
         match &func.sig.inputs[0] {
             syn::FnArg::Receiver(receiver) => {
-                arg_names
-                    .push(syn::Ident::new("self", receiver.self_token.span()));
+                arg_names.push(syn::Ident::new("self", receiver.self_token.span()));
             }
             syn::FnArg::Typed(pat) => {
                 if let syn::Pat::Ident(ident) = &*pat.pat {
@@ -500,9 +491,7 @@ fn create_body_closure(func: &syn::ItemFn) -> TokenStream {
 
                         // Any function argument identifier starting with '_' signals
                         // that the binding will not be used.
-                        if !ident_str.starts_with('_')
-                            || ident_str.starts_with("__")
-                        {
+                        if !ident_str.starts_with('_') || ident_str.starts_with("__") {
                             arg_names.push(ident.ident.clone());
                             closure_args.push(arg.clone());
                         }

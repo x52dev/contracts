@@ -71,11 +71,9 @@ fn rewrite(segments: Vec<TokenTree>) -> proc_macro2::TokenStream {
             TokenTree::Group(group) => {
                 let stream: Vec<_> = group.stream().into_iter().collect();
 
-                let new_stream: TokenStream =
-                    rewrite(stream).into_iter().collect();
+                let new_stream: TokenStream = rewrite(stream).into_iter().collect();
 
-                let mut new_group =
-                    proc_macro2::Group::new(group.delimiter(), new_stream);
+                let mut new_group = proc_macro2::Group::new(group.delimiter(), new_stream);
                 new_group.set_span(group.span());
 
                 lhs.push(TokenTree::Group(new_group));
@@ -104,9 +102,7 @@ fn rewrite(segments: Vec<TokenTree>) -> proc_macro2::TokenStream {
                     }
                 };
 
-                if punct(idx, '-', Spacing::Joint)
-                    && punct(idx + 1, '>', Spacing::Alone)
-                {
+                if punct(idx, '-', Spacing::Joint) && punct(idx + 1, '>', Spacing::Alone) {
                     // found the implication
                     let rest = Vec::from(&segments[idx + 2..]);
                     let rhs_stream = rewrite(rest);
@@ -169,9 +165,7 @@ fn segment_input(tts: TokenStream) -> Vec<Vec<TokenTree>> {
 
     for tt in tts {
         match tt {
-            TokenTree::Punct(p)
-                if p.as_char() == ',' && p.spacing() == Spacing::Alone =>
-            {
+            TokenTree::Punct(p) if p.as_char() == ',' && p.spacing() == Spacing::Alone => {
                 groups.push(group);
                 group = vec![];
             }

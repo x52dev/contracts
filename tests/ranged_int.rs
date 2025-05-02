@@ -4,8 +4,9 @@
 
 //! Test implementing a `RangedInt` type.
 
-use contracts::*;
 use std::ops::{Add, Deref};
+
+use contracts::*;
 
 #[cfg(feature = "mirai_assertions")]
 mod mirai_assertion_mocks;

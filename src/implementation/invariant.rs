@@ -8,11 +8,7 @@ use syn::{FnArg, ImplItem, ImplItemMethod, Item, ItemFn, ItemImpl};
 
 use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
 
-pub(crate) fn invariant(
-    mode: ContractMode,
-    attr: TokenStream,
-    toks: TokenStream,
-) -> TokenStream {
+pub(crate) fn invariant(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
     let item: Item = syn::parse_quote!(#toks);
 
     let name = mode.name().unwrap().to_string() + "invariant";
@@ -27,11 +23,7 @@ pub(crate) fn invariant(
     }
 }
 
-fn invariant_fn(
-    mode: ContractMode,
-    attr: TokenStream,
-    func: ItemFn,
-) -> TokenStream {
+fn invariant_fn(mode: ContractMode, attr: TokenStream, func: ItemFn) -> TokenStream {
     let ty = ContractType::Invariant;
 
     let f = FuncWithContracts::new_with_initial_contract(func, ty, mode, attr);
@@ -59,8 +51,7 @@ fn invariant_impl(
         }
     };
 
-    let invariant_ident =
-        syn::Ident::new(&name, proc_macro2::Span::call_site());
+    let invariant_ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
 
     fn method_uses_self(method: &ImplItemMethod) -> bool {
         let inputs = &method.sig.inputs;

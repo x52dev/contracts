@@ -10,13 +10,12 @@ pub(crate) mod parse;
 pub(crate) mod requires;
 pub(crate) mod traits;
 
-use quote::ToTokens;
-use syn::{Expr, ItemFn};
-
 pub(crate) use ensures::ensures;
 pub(crate) use invariant::invariant;
 use proc_macro2::{Span, TokenStream, TokenTree};
+use quote::ToTokens;
 pub(crate) use requires::requires;
+use syn::{Expr, ItemFn};
 pub(crate) use traits::{contract_trait_item_impl, contract_trait_item_trait};
 
 /// Checking-mode of a contract.
@@ -92,31 +91,17 @@ impl ContractType {
     }
 
     /// Determine the type and mode of an identifier.
-    pub(crate) fn contract_type_and_mode(
-        ident: &str,
-    ) -> Option<(ContractType, ContractMode)> {
+    pub(crate) fn contract_type_and_mode(ident: &str) -> Option<(ContractType, ContractMode)> {
         match ident {
             "requires" => Some((ContractType::Requires, ContractMode::Always)),
             "ensures" => Some((ContractType::Ensures, ContractMode::Always)),
-            "invariant" => {
-                Some((ContractType::Invariant, ContractMode::Always))
-            }
-            "debug_requires" => {
-                Some((ContractType::Requires, ContractMode::Debug))
-            }
-            "debug_ensures" => {
-                Some((ContractType::Ensures, ContractMode::Debug))
-            }
-            "debug_invariant" => {
-                Some((ContractType::Invariant, ContractMode::Debug))
-            }
-            "test_requires" => {
-                Some((ContractType::Requires, ContractMode::Test))
-            }
+            "invariant" => Some((ContractType::Invariant, ContractMode::Always)),
+            "debug_requires" => Some((ContractType::Requires, ContractMode::Debug)),
+            "debug_ensures" => Some((ContractType::Ensures, ContractMode::Debug)),
+            "debug_invariant" => Some((ContractType::Invariant, ContractMode::Debug)),
+            "test_requires" => Some((ContractType::Requires, ContractMode::Test)),
             "test_ensures" => Some((ContractType::Ensures, ContractMode::Test)),
-            "test_invariant" => {
-                Some((ContractType::Invariant, ContractMode::Test))
-            }
+            "test_invariant" => Some((ContractType::Invariant, ContractMode::Test)),
             _ => None,
         }
     }
@@ -134,11 +119,7 @@ pub(crate) struct Contract {
 }
 
 impl Contract {
-    pub(crate) fn from_toks(
-        ty: ContractType,
-        mode: ContractMode,
-        toks: TokenStream,
-    ) -> Self {
+    pub(crate) fn from_toks(ty: ContractType, mode: ContractMode, toks: TokenStream) -> Self {
         let (assertions, streams, desc) = parse::parse_attributes(toks);
 
         let span = Span::call_site();

@@ -2,12 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use crate::implementation::ContractType;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{
-    FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod,
-};
+use syn::{FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod};
+
+use crate::implementation::ContractType;
 
 /// Name used for the "re-routed" method.
 fn contract_method_impl_name(name: &str) -> String {
@@ -15,10 +14,7 @@ fn contract_method_impl_name(name: &str) -> String {
 }
 
 /// Modifies a trait item in a way that it includes contracts.
-pub(crate) fn contract_trait_item_trait(
-    _attrs: TokenStream,
-    mut trait_: ItemTrait,
-) -> TokenStream {
+pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTrait) -> TokenStream {
     /// Just rename the method to have an internal, generated name.
     fn create_method_rename(method: &TraitItemMethod) -> TraitItemMethod {
         let mut m: TraitItemMethod = (*method).clone();
@@ -40,8 +36,7 @@ pub(crate) fn contract_trait_item_trait(
                 m.attrs
                     .iter()
                     .filter(|a| {
-                        let name =
-                            a.path.segments.last().unwrap().ident.to_string();
+                        let name = a.path.segments.last().unwrap().ident.to_string();
 
                         ContractType::contract_type_and_mode(&name).is_none()
                     })
@@ -143,8 +138,7 @@ pub(crate) fn contract_trait_item_trait(
             m.attrs
                 .iter()
                 .filter(|a| {
-                    let name =
-                        a.path.segments.last().unwrap().ident.to_string();
+                    let name = a.path.segments.last().unwrap().ident.to_string();
                     // is doc?
                     if name == "doc" {
                         return true;
@@ -178,10 +172,7 @@ pub(crate) fn contract_trait_item_trait(
                 let rename = create_method_rename(m);
                 let wrapper = create_method_wrapper(m);
 
-                Some(vec![
-                    TraitItem::Method(rename),
-                    TraitItem::Method(wrapper),
-                ])
+                Some(vec![TraitItem::Method(rename), TraitItem::Method(wrapper)])
             } else {
                 None
             }
@@ -204,19 +195,14 @@ pub(crate) fn contract_trait_item_trait(
 
 /// Rename all methods inside an `impl` to use the "internal implementation"
 /// name.
-pub(crate) fn contract_trait_item_impl(
-    _attrs: TokenStream,
-    impl_: ItemImpl,
-) -> TokenStream {
+pub(crate) fn contract_trait_item_impl(_attrs: TokenStream, impl_: ItemImpl) -> TokenStream {
     let new_impl = {
         let mut impl_: ItemImpl = impl_;
 
         impl_.items.iter_mut().for_each(|it| {
             if let ImplItem::Method(method) = it {
-                let new_name =
-                    contract_method_impl_name(&method.sig.ident.to_string());
-                let new_ident =
-                    syn::Ident::new(&new_name, method.sig.ident.span());
+                let new_name = contract_method_impl_name(&method.sig.ident.to_string());
+                let new_ident = syn::Ident::new(&new_name, method.sig.ident.span());
 
                 method.sig.ident = new_ident;
             }
@@ -263,8 +249,7 @@ mod tests {
             }
         };
 
-        let generated =
-            super::contract_trait_item_trait(Default::default(), code);
+        let generated = super::contract_trait_item_trait(Default::default(), code);
 
         assert_eq!(generated.to_string(), expected.to_string());
     }
@@ -294,8 +279,7 @@ mod tests {
             }
         };
 
-        let generated =
-            super::contract_trait_item_impl(Default::default(), code);
+        let generated = super::contract_trait_item_impl(Default::default(), code);
 
         assert_eq!(generated.to_string(), expected.to_string());
     }
