@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+- Add effective contract type to invariant violation messages.
+
 ## [0.6.3] - 2022-03-13
 
 ### Fixed
