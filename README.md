@@ -5,8 +5,8 @@
 <!-- prettier-ignore-start -->
 
 [![crates.io](https://img.shields.io/crates/v/contracts?label=latest)](https://crates.io/crates/contracts)
-[![Documentation](https://docs.rs/contracts/badge.svg?version=0.6.4)](https://docs.rs/contracts/0.6.4)
-[![dependency status](https://deps.rs/crate/contracts/0.6.4/status.svg)](https://deps.rs/crate/contracts/0.6.4)
+[![Documentation](https://docs.rs/contracts/badge.svg?version=0.6.5)](https://docs.rs/contracts/0.6.5)
+[![dependency status](https://deps.rs/crate/contracts/0.6.5/status.svg)](https://deps.rs/crate/contracts/0.6.5)
 ![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/contracts.svg)
 <br />
 [![CI](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml)
