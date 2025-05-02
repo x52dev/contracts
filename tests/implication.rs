@@ -7,6 +7,7 @@ use contracts::*;
 #[cfg(feature = "mirai_assertions")]
 mod mirai_assertion_mocks;
 
+#[allow(clippy::nonminimal_bool)]
 #[test]
 fn test_ret_implication() {
     #[ensures(do_thing -> ret.is_some(), "do_thing should cause a Some(_)")]
@@ -23,6 +24,7 @@ fn test_ret_implication() {
     perform_thing(false);
 }
 
+#[allow(clippy::nonminimal_bool)]
 #[test]
 fn test_ret_implication_old() {
     #[ensures(old(*x) % 2 == 0 -> *x % 2 == 0)]
@@ -38,6 +40,7 @@ fn test_ret_implication_old() {
     incr(&mut x);
 }
 
+#[allow(clippy::nonminimal_bool)]
 #[test]
 fn test_requires_implication() {
     #[requires(!negative -> value >= 0)]

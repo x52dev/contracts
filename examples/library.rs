@@ -24,6 +24,7 @@ impl Library {
         self.available.insert(book_id.to_string());
     }
 
+    #[allow(clippy::nonminimal_bool)]
     #[debug_requires(self.book_exists(book_id))]
     #[ensures(ret -> self.available.len() == old(self.available.len()) - 1)]
     #[ensures(ret -> self.lent.len() == old(self.lent.len()) + 1)]

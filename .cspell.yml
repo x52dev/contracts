@@ -7,4 +7,5 @@ words:
   - nixos
   - nixpkgs
   - pkgs
+  - RUSTDOCFLAGS
   - taplo
