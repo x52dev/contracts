@@ -4,8 +4,8 @@
 2. Run `cargo run --example library` to make sure the examples still run properly
 3. Run `cargo fmt`
 4. Change version numbers
-    - inside `README.md` in the "Set-up" section
-    - inside `Cargo.toml`
+   - inside `README.md` in the "Set-up" section
+   - inside `Cargo.toml`
 5. Write or finish entry in `CHANGELOG.md`
 6. Run `cargo doc --open` and check if the documentation looks fine and is up to date
 7. Run `cargo package` and check the output for any unwanted or missing files

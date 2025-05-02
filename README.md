@@ -1,20 +1,14 @@
-# *Design By Contract* for Rust
+# _Design By Contract_ for Rust
 
-[![License][license]][LICENSE]
-![Build status][build]
-![Lines of Code][loc]
+[![License][license]][LICENSE] ![Build status][build] ![Lines of Code][loc]
 
 [license]: https://img.shields.io/badge/license-MPL%202.0-blue.svg
 [build]: https://gitlab.com/karroffel/contracts/badges/master/pipeline.svg
 [loc]: https://tokei.rs/b1/gitlab/karroffel/contracts?category=code
 
-Annotate functions and methods with "contracts", using *invariants*,
-*pre-conditions* and *post-conditions*.
+Annotate functions and methods with "contracts", using _invariants_, _pre-conditions_ and _post-conditions_.
 
-[Design by contract][dbc] is a popular method to augment code with formal
-interface specifications.
-These specifications are used to increase the correctness of the code by
-checking them as assertions at runtime.
+[Design by contract][dbc] is a popular method to augment code with formal interface specifications. These specifications are used to increase the correctness of the code by checking them as assertions at runtime.
 
 [dbc]: https://en.wikipedia.org/wiki/Design_by_contract
 
@@ -71,10 +65,9 @@ This crate exposes the `requires`, `ensures` and `invariant` attributes.
 
 - `requires` are checked before a function/method is executed.
 - `ensures` are checked after a function/method ran to completion
-- `invariant`s are checked both before *and* after a function/method ran.
+- `invariant`s are checked both before _and_ after a function/method ran.
 
-Additionally, all those attributes have versions with different "modes". See
-[the Modes section](#Modes) below.
+Additionally, all those attributes have versions with different "modes". See [the Modes section](#Modes) below.
 
 For `trait`s and trait `impl`s the `contract_trait` attribute can be used.
 
@@ -84,9 +77,7 @@ More specific information can be found in the crate documentation.
 
 ### `old()` function
 
-One unique feature that this crate provides is an `old()` pseudo-function which
-allows to perform checks using a value of a parameter before the function call
-happened. This is only available in `ensures` attributes.
+One unique feature that this crate provides is an `old()` pseudo-function which allows to perform checks using a value of a parameter before the function call happened. This is only available in `ensures` attributes.
 
 ```rust
 #[ensures(*x == old(*x) + 1, "after the call `x` was incremented")]
@@ -97,9 +88,7 @@ fn incr(x: &mut usize) {
 
 ### `->` operator
 
-For more complex functions it can be useful to express behaviour using logical
-implication. Because Rust does not feature an operator for implication, this
-crate adds this operator for use in attributes.
+For more complex functions it can be useful to express behaviour using logical implication. Because Rust does not feature an operator for implication, this crate adds this operator for use in attributes.
 
 ```rust
 #[ensures(person_name.is_some() -> ret.contains(person_name.unwrap()))]
@@ -116,26 +105,17 @@ fn geeting(person_name: Option<&str>) -> String {
 
 This operator is right-associative.
 
-**Note**: Because of the design of `syn`, it is tricky to add custom operators
-to be parsed, so this crate performs a rewrite of the `TokenStream` instead.
-The rewrite works by separating the expression into a part that's left of the
-`->` operator and the rest on the right side. This means that
-`if a -> b { c } else { d }` will not generate the expected code.
-Explicit grouping using parenthesis or curly-brackets can be used to avoid this.
-
+**Note**: Because of the design of `syn`, it is tricky to add custom operators to be parsed, so this crate performs a rewrite of the `TokenStream` instead. The rewrite works by separating the expression into a part that's left of the `->` operator and the rest on the right side. This means that `if a -> b { c } else { d }` will not generate the expected code. Explicit grouping using parenthesis or curly-brackets can be used to avoid this.
 
 ## Modes
 
 All the attributes (requires, ensures, invariant) have `debug_*` and `test_*` versions.
 
-- `debug_requires`/`debug_ensures`/`debug_invariant` use `debug_assert!`
-  internally rather than `assert!`
-- `test_requires`/`test_ensures`/`test_invariant` guard the `assert!` with an
-  `if cfg!(test)`.
-  This should mostly be used for stating equivalence to "slow but obviously
-  correct" alternative implementations or checks.
-  
+- `debug_requires`/`debug_ensures`/`debug_invariant` use `debug_assert!` internally rather than `assert!`
+- `test_requires`/`test_ensures`/`test_invariant` guard the `assert!` with an `if cfg!(test)`. This should mostly be used for stating equivalence to "slow but obviously correct" alternative implementations or checks.
+
   For example, a merge-sort implementation might look like this
+
   ```rust
   #[test_ensures(is_sorted(input))]
   fn merge_sort<T: Ord + Copy>(input: &mut [T]) {
@@ -145,19 +125,16 @@ All the attributes (requires, ensures, invariant) have `debug_*` and `test_*` ve
 
 ## Set-up
 
-To install the latest version, add `contracts` to the dependency section of the
-`Cargo.toml` file.
+To install the latest version, add `contracts` to the dependency section of the `Cargo.toml` file.
 
 ```
 [dependencies]
 contracts = "0.6.3"
 ```
 
-To then bring all procedural macros into scope, you can add `use contracts::*;`
-in all files you plan to use the contract attributes.
+To then bring all procedural macros into scope, you can add `use contracts::*;` in all files you plan to use the contract attributes.
 
-Alternatively use the "old-style" of importing macros to have them available
-project-wide.
+Alternatively use the "old-style" of importing macros to have them available project-wide.
 
 ```rust
 #[macro_use]
@@ -168,20 +145,14 @@ extern crate contracts;
 
 This crate exposes a number of feature flags to configure the assertion behavior.
 
- - `disable_contracts` - disables all checks and assertions.
- - `override_debug` - changes all contracts (except `test_` ones) into `debug_*`
-   versions
- - `override_log` - changes all contracts (except `test_` ones) into a
-   `log::error!()` call if the condition is violated.
-   No abortion happens.
- - `mirai_assertions` - instead of regular assert! style macros, emit macros
-   used by the [MIRAI] static analyzer. For more documentation of this usage, 
-   head to the [MIRAI] repo.
+- `disable_contracts` - disables all checks and assertions.
+- `override_debug` - changes all contracts (except `test_` ones) into `debug_*` versions
+- `override_log` - changes all contracts (except `test_` ones) into a `log::error!()` call if the condition is violated. No abortion happens.
+- `mirai_assertions` - instead of regular assert! style macros, emit macros used by the [MIRAI] static analyzer. For more documentation of this usage, head to the [MIRAI] repo.
 
 [MIRAI]: https://github.com/facebookexperimental/MIRAI
 
 ## TODOs
 
- - implement more contracts for traits.
- - add a static analyzer à la SPARK for whole-projects using the contracts to
-   make static assertions.
+- implement more contracts for traits.
+- add a static analyzer à la SPARK for whole-projects using the contracts to make static assertions.

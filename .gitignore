@@ -1,10 +1,9 @@
-/target
-
 # rust
 /target/
 **/*.rs.bk
 
 # direnv
+/.toolchain/
 /.direnv/
 
 # code coverage
