@@ -1,10 +1,20 @@
-# _Design By Contract_ for Rust
+# `contracts`
 
-[![License][license]][LICENSE] ![Build status][build] ![Lines of Code][loc]
+> _Design By Contract_ for Rust
 
-[license]: https://img.shields.io/badge/license-MPL%202.0-blue.svg
-[build]: https://gitlab.com/karroffel/contracts/badges/master/pipeline.svg
-[loc]: https://tokei.rs/b1/gitlab/karroffel/contracts?category=code
+<!-- prettier-ignore-start -->
+
+[![crates.io](https://img.shields.io/crates/v/contracts?label=latest)](https://crates.io/crates/contracts)
+[![Documentation](https://docs.rs/contracts/badge.svg?version=0.6.4)](https://docs.rs/contracts/0.6.4)
+[![dependency status](https://deps.rs/crate/contracts/0.6.4/status.svg)](https://deps.rs/crate/contracts/0.6.4)
+![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/contracts.svg)
+<br />
+[![CI](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/x52dev/contracts-rs/graph/badge.svg?token=OpYe6I7dj5)](https://codecov.io/gh/x52dev/contracts-rs)
+![Version](https://img.shields.io/crates/msrv/contracts.svg)
+[![Download](https://img.shields.io/crates/d/contracts.svg)](https://crates.io/crates/contracts)
+
+<!-- prettier-ignore-end -->
 
 Annotate functions and methods with "contracts", using _invariants_, _pre-conditions_ and _post-conditions_.
 
