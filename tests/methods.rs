@@ -42,6 +42,7 @@ fn methods() {
             self.count -= 2;
         }
 
+        #[allow(dead_code)]
         #[invariant(is_even(self.count))]
         fn this_var_collision(&mut self) -> usize {
             #[allow(unused_variables)]
