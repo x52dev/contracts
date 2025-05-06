@@ -4,7 +4,7 @@
 
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{FnArg, ImplItem, ImplItemMethod, Item, ItemFn, ItemImpl};
+use syn::{FnArg, ImplItem, ImplItemFn, Item, ItemFn, ItemImpl};
 
 use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
 
@@ -53,7 +53,7 @@ fn invariant_impl(
 
     let invariant_ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
 
-    fn method_uses_self(method: &ImplItemMethod) -> bool {
+    fn method_uses_self(method: &ImplItemFn) -> bool {
         let inputs = &method.sig.inputs;
 
         if !inputs.is_empty() {
@@ -64,7 +64,7 @@ fn invariant_impl(
     }
 
     for item in &mut impl_def.items {
-        if let ImplItem::Method(method) = item {
+        if let ImplItem::Fn(method) = item {
             // only implement invariants for methods that take `self`
             if !method_uses_self(method) {
                 continue;
@@ -75,7 +75,7 @@ fn invariant_impl(
                 #method
             };
 
-            let met: ImplItemMethod = syn::parse_quote!(#method_toks);
+            let met: ImplItemFn = syn::parse_quote!(#method_toks);
 
             *method = met;
         }

@@ -4,7 +4,7 @@
 
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemMethod};
+use syn::{FnArg, ImplItem, ItemImpl, ItemTrait, Pat, TraitItem, TraitItemFn};
 
 use crate::implementation::ContractType;
 
@@ -16,8 +16,8 @@ fn contract_method_impl_name(name: &str) -> String {
 /// Modifies a trait item in a way that it includes contracts.
 pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTrait) -> TokenStream {
     /// Just rename the method to have an internal, generated name.
-    fn create_method_rename(method: &TraitItemMethod) -> TraitItemMethod {
-        let mut m: TraitItemMethod = (*method).clone();
+    fn create_method_rename(method: &TraitItemFn) -> TraitItemFn {
+        let mut m = method.clone();
 
         // rename method and modify attributes
         {
@@ -35,8 +35,8 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
             new_attrs.extend(
                 m.attrs
                     .iter()
-                    .filter(|a| {
-                        let name = a.path.segments.last().unwrap().ident.to_string();
+                    .filter(|attr| {
+                        let name = attr.path().segments.last().unwrap().ident.to_string();
 
                         ContractType::contract_type_and_mode(&name).is_none()
                     })
@@ -55,7 +55,7 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
     /// includes contracts.
     ///
     /// This new function forwards the call to the actual implementation.
-    fn create_method_wrapper(method: &TraitItemMethod) -> TraitItemMethod {
+    fn create_method_wrapper(method: &TraitItemFn) -> TraitItemFn {
         struct ArgInfo {
             call_toks: proc_macro2::TokenStream,
         }
@@ -92,7 +92,7 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
             }
         }
 
-        let mut m: TraitItemMethod = (*method).clone();
+        let mut m = method.clone();
 
         let argument_data = m
             .sig
@@ -138,7 +138,7 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
             m.attrs
                 .iter()
                 .filter(|a| {
-                    let name = a.path.segments.last().unwrap().ident.to_string();
+                    let name = a.path().segments.last().unwrap().ident.to_string();
                     // is doc?
                     if name == "doc" {
                         return true;
@@ -168,11 +168,11 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
         .items
         .iter()
         .filter_map(|item| {
-            if let TraitItem::Method(m) = item {
+            if let TraitItem::Fn(m) = item {
                 let rename = create_method_rename(m);
                 let wrapper = create_method_wrapper(m);
 
-                Some(vec![TraitItem::Method(rename), TraitItem::Method(wrapper)])
+                Some(vec![TraitItem::Fn(rename), TraitItem::Fn(wrapper)])
             } else {
                 None
             }
@@ -183,7 +183,7 @@ pub(crate) fn contract_trait_item_trait(_attrs: TokenStream, mut trait_: ItemTra
     // remove all previous methods
     trait_
         .items
-        .retain(|item| !matches!(item, TraitItem::Method(_)));
+        .retain(|item| !matches!(item, TraitItem::Fn(_)));
 
     // add back new methods
     trait_.items.extend(funcs);
@@ -198,7 +198,7 @@ pub(crate) fn contract_trait_item_impl(_attrs: TokenStream, impl_: ItemImpl) -> 
         let mut impl_: ItemImpl = impl_;
 
         impl_.items.iter_mut().for_each(|it| {
-            if let ImplItem::Method(method) = it {
+            if let ImplItem::Fn(method) = it {
                 let new_name = contract_method_impl_name(&method.sig.ident.to_string());
                 let new_ident = syn::Ident::new(&new_name, method.sig.ident.span());
 

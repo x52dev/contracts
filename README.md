@@ -9,8 +9,8 @@
 [![dependency status](https://deps.rs/crate/contracts/0.6.5/status.svg)](https://deps.rs/crate/contracts/0.6.5)
 ![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/contracts.svg)
 <br />
-[![CI](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/x52dev/contracts-rs/graph/badge.svg?token=OpYe6I7dj5)](https://codecov.io/gh/x52dev/contracts-rs)
+[![CI](https://github.com/x52dev/contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/x52dev/contracts-rs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/x52dev/contracts/graph/badge.svg?token=OpYe6I7dj5)](https://codecov.io/gh/x52dev/contracts-rs)
 ![Version](https://img.shields.io/crates/msrv/contracts.svg)
 [![Download](https://img.shields.io/crates/d/contracts.svg)](https://crates.io/crates/contracts)
 

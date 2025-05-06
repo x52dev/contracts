@@ -1,12 +1,16 @@
 version: "0.2"
 words:
   - clippy
+  - codegen
   - direnv
+  - elems
   - msrv
   - nextest
   - nixos
   - nixpkgs
   - nonminimal
   - pkgs
+  - punct
   - RUSTDOCFLAGS
   - taplo
+  - toks

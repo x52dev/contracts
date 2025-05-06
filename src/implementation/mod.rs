@@ -12,7 +12,7 @@ pub(crate) mod traits;
 
 pub(crate) use ensures::ensures;
 pub(crate) use invariant::invariant;
-use proc_macro2::{Span, TokenStream, TokenTree};
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 pub(crate) use requires::requires;
 use syn::{Expr, ItemFn};
@@ -166,23 +166,25 @@ impl FuncWithContracts {
             .attrs
             .iter()
             .filter_map(|a| {
-                let name = a.path.segments.last().unwrap().ident.to_string();
+                let name = a.path().segments.last().unwrap().ident.to_string();
                 let (ty, mode) = ContractType::contract_type_and_mode(&name)?;
                 Some((ty, mode, a))
             })
-            .map(|(ty, mode, a)| {
+            .map(|(ty, mode, attr)| {
                 // the tts on attributes contains the out parenthesis, so some
                 // code might be mistakenly parsed as tuples, that's not good!
                 //
                 // this is a hack to get to the inner token stream.
 
-                let tok_tree = a.tokens.clone().into_iter().next().unwrap();
-                let toks = match tok_tree {
-                    TokenTree::Group(group) => group.stream(),
-                    TokenTree::Ident(i) => i.into_token_stream(),
-                    TokenTree::Punct(p) => p.into_token_stream(),
-                    TokenTree::Literal(l) => l.into_token_stream(),
-                };
+                fn extract_first_arg_stream(attr: &syn::Attribute) -> TokenStream {
+                    match &attr.meta {
+                        syn::Meta::List(list) => list.tokens.clone(),
+                        syn::Meta::Path(path) => path.to_token_stream(),
+                        syn::Meta::NameValue(nv) => dbg!(nv.value.to_token_stream()),
+                    }
+                }
+
+                let toks = extract_first_arg_stream(attr);
 
                 Contract::from_toks(ty, mode, toks)
             });
@@ -197,7 +199,7 @@ impl FuncWithContracts {
                 .into_iter()
                 .filter(|attr| {
                     ContractType::contract_type_and_mode(
-                        &attr.path.segments.last().unwrap().ident.to_string(),
+                        &attr.path().segments.last().unwrap().ident.to_string(),
                     )
                     .is_none()
                 })
