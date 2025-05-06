@@ -29,8 +29,13 @@ fn gl_issue_16() {
         fn insertion_sort(&mut self);
     }
 
+    // TODO(MSRV 1.82): remove and use std's [T].is_sorted()
+    fn is_sorted<T: Ord>(s: &[T]) -> bool {
+        s.windows(2).all(|w| w[0] <= w[1])
+    }
+
     impl<T: Ord + Debug> Sortable<T> for Vec<T> {
-        #[debug_ensures(self.is_sorted())]
+        #[debug_ensures(is_sorted(self))]
         fn insertion_sort(&mut self) {
             assert!(self[0] < self[1]);
         }

@@ -147,6 +147,7 @@ fn test_impl_trait_arg() {
     );
 }
 
+#[allow(unused)]
 #[test]
 #[deny(clippy::used_underscore_binding)]
 fn test_unbound_parameters_clippy() {
