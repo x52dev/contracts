@@ -17,7 +17,7 @@ check:
     fd --hidden --extension=toml --exec-batch taplo format --check
     fd --hidden --extension=toml --exec-batch taplo lint
     cargo +nightly fmt -- --check
-    cargo machete --with-metadata
+    cargo shear
 
 # Format project
 fmt:

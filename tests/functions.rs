@@ -157,6 +157,7 @@ fn test_unbound_parameters_clippy() {
     }
 }
 
+#[allow(unused)]
 #[test]
 #[deny(non_fmt_panics)]
 fn test_braced_condition_expression_clippy() {
