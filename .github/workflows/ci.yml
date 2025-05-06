@@ -55,7 +55,9 @@ jobs:
 
       - name: Downgrade for MSRV
         if: matrix.toolchain.name == 'msrv'
-        run: just downgrade-for-msrv
+        run: |
+          rm -f Cargo.lock
+          just downgrade-for-msrv
 
       - name: Test
         run: just test-no-coverage

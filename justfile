@@ -8,7 +8,6 @@ _list:
 # Downgrade dependencies necessary to run MSRV checks/tests.
 [private]
 downgrade-for-msrv:
-    rm Cargo.lock
     # No downgrades currently needed.
 
 # Check project

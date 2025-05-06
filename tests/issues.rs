@@ -37,7 +37,7 @@ fn gl_issue_16() {
     }
 }
 
-#[allow(unused)] // compile-only test
+#[allow(unused, clippy::assertions_on_constants)] // compile-only test
 #[test]
 fn gl_issue_17() {
     use std::future::pending;
