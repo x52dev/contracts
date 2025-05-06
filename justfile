@@ -8,6 +8,7 @@ _list:
 # Downgrade dependencies necessary to run MSRV checks/tests.
 [private]
 downgrade-for-msrv:
+    rm Cargo.lock
     # No downgrades currently needed.
 
 # Check project
@@ -48,11 +49,9 @@ test: test-no-coverage
     # @just test-coverage-lcov
 
 # Test workspace using MSRV
-test-msrv: downgrade-for-msrv
-    @just toolchain={{ msrv_rustup }} test-no-coverage
+test-msrv: downgrade-for-msrv test
 
-    # Test workspace and generate Codecov coverage file
-
+# Test workspace and generate Codecov coverage file
 test-coverage-codecov:
     cargo {{ toolchain }} llvm-cov --workspace --all-features --codecov --output-path codecov.json
 
