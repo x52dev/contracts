@@ -180,7 +180,7 @@ impl FuncWithContracts {
                     match &attr.meta {
                         syn::Meta::List(list) => list.tokens.clone(),
                         syn::Meta::Path(path) => path.to_token_stream(),
-                        syn::Meta::NameValue(nv) => dbg!(nv.value.to_token_stream()),
+                        syn::Meta::NameValue(nv) => nv.value.to_token_stream(),
                     }
                 }
 
