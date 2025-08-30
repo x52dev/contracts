@@ -18,8 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+        with:
+          extra-conf: lazy-trees = true
+
+      - name: Set up FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@v2
 
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1.5.0

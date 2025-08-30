@@ -1,7 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-parts.url = "github:hercules-ci/flake-parts";
     x52 = {
       url = "github:x52dev/nix";
@@ -25,14 +24,12 @@
 
             packages = [
               config.formatter
-              inputs'.nixpkgs-unstable.legacyPackages.cargo-shear
+              pkgs.cargo-shear
               pkgs.fd
               pkgs.just
               pkgs.nodePackages.prettier
               pkgs.taplo
             ] ++ lib.optional pkgs.stdenv.isDarwin [
-              pkgs.pkgsBuildHost.darwin.apple_sdk.frameworks.CoreFoundation
-              pkgs.pkgsBuildHost.darwin.apple_sdk.frameworks.Security
               pkgs.pkgsBuildHost.libiconv
             ];
 
