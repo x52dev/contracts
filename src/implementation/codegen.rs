@@ -8,7 +8,7 @@ use syn::{
     spanned::Spanned,
     visit::{visit_return_type, Visit},
     visit_mut::{self as visitor, visit_block_mut, visit_expr_mut, VisitMut},
-    Attribute, Expr, ExprCall, ReturnType, TypeImplTrait,
+    Attribute, Expr, ExprCall, ExprClosure, ReturnType, TypeImplTrait,
 };
 
 use crate::implementation::{Contract, ContractMode, ContractType, FuncWithContracts};
@@ -378,6 +378,10 @@ impl VisitMut for ReturnReplacer {
         }
 
         visit_expr_mut(self, node);
+    }
+
+    fn visit_expr_closure_mut(&mut self, _node: &mut ExprClosure) {
+        // Do not replace return statements inside closures.  Skip calling the base visitor.
     }
 }
 
