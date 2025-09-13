@@ -96,3 +96,25 @@ fn gl_issue_18() {
 
     assert_eq!(1, euclidean(3, 4));
 }
+
+#[allow(unused)] // compile-only test
+#[test]
+fn gl_issue_41() {
+    use contracts::requires;
+
+    fn foo(f: impl Fn(i32) -> i32) -> i32 {
+        // no-op
+        f(-10)
+    }
+
+    #[requires(true)]
+    fn bar() {
+        let y = foo(|x: i32| {
+            if x < 0 {
+                return 0;
+            }
+            x
+        });
+        assert_eq!(y, 0);
+    }
+}
