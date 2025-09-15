@@ -51,7 +51,7 @@ jobs:
           toolchain: ${{ matrix.toolchain.version }}
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2.59.1
+        uses: taiki-e/install-action@v2.61.5
         with:
           tool: cargo-nextest
 
