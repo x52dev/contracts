@@ -363,7 +363,7 @@ pub(crate) fn generate(
 
     // replace the old function body with the new one
 
-    func.function.block = Box::new(syn::parse_quote!(#new_block));
+    *func.function.block = syn::parse_quote!(#new_block);
 
     func.function.into_token_stream()
 }

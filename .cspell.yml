@@ -2,6 +2,7 @@ version: "0.2"
 words:
   - clippy
   - codegen
+  - ctype
   - direnv
   - elems
   - msrv

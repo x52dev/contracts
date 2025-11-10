@@ -97,11 +97,12 @@ fn gl_issue_18() {
     assert_eq!(1, euclidean(3, 4));
 }
 
-#[allow(unused)] // compile-only test
+#[expect(clippy::assertions_on_constants)]
 #[test]
 fn gl_issue_41() {
     use contracts::requires;
 
+    #[expect(dead_code)]
     fn foo(f: impl Fn(i32) -> i32) -> i32 {
         // no-op
         f(-10)
