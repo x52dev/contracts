@@ -35,7 +35,7 @@ jobs:
     name: Test / ${{ matrix.toolchain.name }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@v3
