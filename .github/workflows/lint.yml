@@ -77,7 +77,7 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Install cargo-deny
-        uses: taiki-e/install-action@v2.62.57
+        uses: taiki-e/install-action@v2.65.13
         with:
           tool: cargo-deny
 
