@@ -8,7 +8,9 @@ _list:
 # Downgrade dependencies necessary to run MSRV checks/tests.
 [private]
 downgrade-for-msrv:
-    # No downgrades currently needed.
+    cargo update -p=quote --precise=1.0.40 # next ver: 1.60
+    cargo update -p=syn --precise=2.0.53 # next ver: 1.60
+    cargo update -p=proc_macro2 --precise=1.0.101 # next ver: 1.60
 
 # Check project
 check:
