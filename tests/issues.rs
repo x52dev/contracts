@@ -97,17 +97,18 @@ fn gl_issue_18() {
     assert_eq!(1, euclidean(3, 4));
 }
 
-#[expect(clippy::assertions_on_constants)]
+#[allow(clippy::assertions_on_constants)] // TODO(MSRV 1.81): replace with expect
 #[test]
 fn gl_issue_41() {
     use contracts::requires;
 
-    #[expect(dead_code)]
+    #[allow(dead_code)] // TODO(MSRV 1.81): replace with expect
     fn foo(f: impl Fn(i32) -> i32) -> i32 {
         // no-op
         f(-10)
     }
 
+    #[allow(dead_code)] // TODO(MSRV 1.81): replace with expect
     #[requires(true)]
     fn bar() {
         let y = foo(|x: i32| {
