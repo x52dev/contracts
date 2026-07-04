@@ -8,6 +8,7 @@ version = "0.6.7"
 dependencies = [
  "proc-macro2",
  "quote",
+ "rustversion-msrv",
  "syn",
  "trybuild",
 ]
@@ -69,6 +70,12 @@ checksum = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "rustversion-msrv"
+version = "0.100.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6ceb60223ee771fb5dfe462e29e5ee92bca9a7b9c555584f4d361045dae0e12"
 
 [[package]]
 name = "serde"
