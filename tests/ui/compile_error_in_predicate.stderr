@@ -1,0 +1,5 @@
+error: predicate should be a boolean expression
+ --> tests/ui/compile_error_in_predicate.rs:3:12
+  |
+3 | #[requires(compile_error!("predicate should be a boolean expression"))]
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
