@@ -33,28 +33,28 @@ jobs:
     name: Test / ${{ matrix.toolchain.name }}
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install Determinate Nix
-        uses: DeterminateSystems/determinate-nix-action@v3
+        uses: DeterminateSystems/determinate-nix-action@629b284231c2a82554b724e357e47fc6020833c8 # v3.21.2
         with:
           extra-conf: lazy-trees = true
 
       - name: Set up FlakeHub Cache
-        uses: DeterminateSystems/flakehub-cache-action@v3
+        uses: DeterminateSystems/flakehub-cache-action@9926dde74484ccb2224835b80531de64ed4336ef # v3.21.2
 
       - name: Install Rust (${{ matrix.toolchain.name }})
-        uses: actions-rust-lang/setup-rust-toolchain@v1.12.0
+        uses: actions-rust-lang/setup-rust-toolchain@9d7e65c320fdb52dcd45ffaa68deb6c02c8754d9 # v1.12.0
         with:
           toolchain: ${{ matrix.toolchain.version }}
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2.82.6
+        uses: taiki-e/install-action@9bcaee1dcae34154180f412e2fa69355a7cda9f6 # v2.82.6
         with:
           tool: cargo-nextest
 
       - name: Enter Nix devshell
-        uses: nicknovitski/nix-develop@v1.2.1
+        uses: nicknovitski/nix-develop@9be7cfb4b10451d3390a75dc18ad0465bed4932a # v1.2.1
 
       - name: Downgrade for MSRV
         if: matrix.toolchain.name == 'msrv'
