@@ -9,7 +9,6 @@ _list:
 [private]
 downgrade-for-msrv:
     cargo update -p=quote --precise=1.0.40 # next ver: 1.60
-    cargo update -p=serde_json --precise=1.0.115 # next ver: 1.56
     cargo update -p=serde --precise=1.0.197 # next ver: 1.56
     cargo update -p=syn --precise=2.0.106 # next ver: 1.60
     cargo update -p=proc-macro2 --precise=1.0.101 # next ver: 1.60
