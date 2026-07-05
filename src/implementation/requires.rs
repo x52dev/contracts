@@ -5,12 +5,15 @@
 use proc_macro2::TokenStream;
 use syn::ItemFn;
 
-use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
+use crate::implementation::{emit_error, ContractMode, ContractType, FuncWithContracts};
 
 pub(crate) fn requires(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
     let ty = ContractType::Requires;
 
-    let func: ItemFn = syn::parse_quote!(#toks);
+    let func: ItemFn = match syn::parse2(toks.clone()) {
+        Ok(func) => func,
+        Err(err) => return emit_error(err, toks),
+    };
 
     let f = FuncWithContracts::new_with_initial_contract(func, ty, mode, attr);
 

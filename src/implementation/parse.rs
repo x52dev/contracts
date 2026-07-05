@@ -19,23 +19,25 @@ pub(crate) fn parse_attributes(
 
     let mut conds: Vec<Expr> = vec![];
 
-    for seg in rewritten_segs {
+    let last_segment_idx = rewritten_segs.len().saturating_sub(1);
+
+    for (idx, seg) in rewritten_segs.into_iter().enumerate() {
         let expr = match syn::parse2::<Expr>(seg) {
             Ok(val) => val,
             Err(err) => Expr::Verbatim(err.to_compile_error()),
         };
+
+        if idx != last_segment_idx && string_lit_value(&expr).is_some() {
+            let err =
+                syn::Error::new_spanned(expr, "contract description must be the last argument");
+            conds.push(Expr::Verbatim(err.to_compile_error()));
+            continue;
+        }
+
         conds.push(expr);
     }
 
-    let desc = conds
-        .last()
-        .map(|expr| match expr {
-            Expr::Lit(ExprLit {
-                lit: Lit::Str(str), ..
-            }) => Some(str.value()),
-            _ => None,
-        })
-        .unwrap_or(None);
+    let desc = conds.last().and_then(string_lit_value);
 
     if desc.is_some() {
         conds.pop();
@@ -47,6 +49,15 @@ pub(crate) fn parse_attributes(
     }
 
     (conds, segments_stream, desc)
+}
+
+fn string_lit_value(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Lit(ExprLit {
+            lit: Lit::Str(str), ..
+        }) => Some(str.value()),
+        _ => None,
+    }
 }
 
 fn error_on_false_literal(expr: &mut Expr) {
