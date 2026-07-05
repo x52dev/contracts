@@ -15,6 +15,7 @@ downgrade-for-msrv:
     cargo update -p=proc-macro2 --precise=1.0.101 # next ver: 1.60
     cargo update -p=unicode-ident --precise=1.0.22 # next ver: 1.71
     cargo update -p=ryu --precise=1.0.20 # next ver: 1.68
+    cargo update -p=itoa --precise=1.0.15 # next ver: 1.68
 
 # Check project
 check:
