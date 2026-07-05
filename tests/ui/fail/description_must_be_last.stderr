@@ -1,0 +1,7 @@
+error[E0600]: cannot apply unary operator `!` to type `&'static str`
+ --> tests/ui/fail/description_must_be_last.rs:3:12
+  |
+3 | #[requires("x must be positive", x > 0)]
+  |            ^^^^^^^^^^^^^^^^^^^^ cannot apply unary operator `!`
+  |
+  = note: this error originates in the macro `assert` (in Nightly builds, run with -Z macro-backtrace for more info)

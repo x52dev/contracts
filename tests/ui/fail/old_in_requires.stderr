@@ -1,0 +1,5 @@
+error[E0425]: cannot find function `old` in this scope
+ --> tests/ui/fail/old_in_requires.rs:3:12
+  |
+3 | #[requires(old(x) == x)]
+  |            ^^^ not found in this scope
