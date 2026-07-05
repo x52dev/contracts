@@ -42,7 +42,28 @@ pub(crate) fn parse_attributes(
         segments_stream.pop();
     }
 
+    for cond in &mut conds {
+        error_on_false_literal(cond);
+    }
+
     (conds, segments_stream, desc)
+}
+
+fn error_on_false_literal(expr: &mut Expr) {
+    let Expr::Lit(ExprLit {
+        lit: Lit::Bool(lit),
+        ..
+    }) = expr
+    else {
+        return;
+    };
+
+    if lit.value {
+        return;
+    }
+
+    let err = syn::Error::new_spanned(&*expr, "contract predicate is always false");
+    *expr = Expr::Verbatim(err.into_compile_error());
 }
 
 // This function rewrites a list of TokenTrees so that the "pseudooperator" for

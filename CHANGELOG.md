@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Update `syn` requirement to `3`.
 - Minimum supported Rust version (MSRV) is now 1.77.
+- Reject contract predicates that are the literal `false` at compile time.
 
 ## 0.6.7
 

@@ -1,0 +1,5 @@
+error: contract predicate is always false
+ --> tests/ui/fail/always_false_predicate.rs:3:11
+  |
+3 | #[ensures(false)]
+  |           ^^^^^
