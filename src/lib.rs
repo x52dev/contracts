@@ -183,6 +183,30 @@ mod implementation;
 use implementation::ContractMode;
 use proc_macro::TokenStream;
 
+/// Check multiple contracts with a single attribute.
+///
+/// This is useful when combining pre-conditions and post-conditions because it
+/// avoids stacked attribute expansion ordering.
+///
+/// ## Example
+///
+/// ```rust
+/// # use contracts::contract;
+/// #[contract(
+///     requires(x > 0, "x must be positive"),
+///     ensures(ret > x),
+/// )]
+/// fn incr(x: i32) -> i32 {
+///     x + 1
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn contract(attr: TokenStream, toks: TokenStream) -> TokenStream {
+    let attr = attr.into();
+    let toks = toks.into();
+    implementation::contract(attr, toks).into()
+}
+
 /// Pre-conditions are checked before the function body is run.
 ///
 /// ## Example
