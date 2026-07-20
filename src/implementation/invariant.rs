@@ -6,20 +6,30 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{FnArg, ImplItem, ImplItemFn, Item, ItemFn, ItemImpl};
 
-use crate::implementation::{ContractMode, ContractType, FuncWithContracts};
+use crate::implementation::{emit_error, ContractMode, ContractType, FuncWithContracts};
 
 pub(crate) fn invariant(mode: ContractMode, attr: TokenStream, toks: TokenStream) -> TokenStream {
-    let item: Item = syn::parse_quote!(#toks);
-
     let name = mode.name().unwrap().to_string() + "invariant";
+
+    let item: Item = match syn::parse2(toks.clone()) {
+        Ok(item) => item,
+        Err(err) => return emit_error(err, toks),
+    };
 
     match item {
         Item::Fn(fn_) => invariant_fn(mode, attr, fn_),
         Item::Impl(impl_) => invariant_impl(mode, attr, impl_),
-        _ => unimplemented!(
-            "The #[{}] attribute only works on functions and impl-blocks.",
-            name
-        ),
+        item => {
+            let error = syn::Error::new_spanned(
+                &item,
+                format!(
+                    "the #[{}] attribute only works on functions and impl blocks",
+                    name
+                ),
+            );
+
+            emit_error(error, item)
+        }
     }
 }
 

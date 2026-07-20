@@ -18,6 +18,14 @@ pub(crate) use requires::requires;
 use syn::{Expr, ItemFn};
 pub(crate) use traits::{contract_trait_item_impl, contract_trait_item_trait};
 
+pub(crate) fn emit_error(err: syn::Error, tokens: impl ToTokens) -> TokenStream {
+    let error = err.into_compile_error();
+    quote::quote! {
+        #error
+        #tokens
+    }
+}
+
 /// Checking-mode of a contract.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) enum ContractMode {
