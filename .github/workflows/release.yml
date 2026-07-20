@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+
+      - name: Authenticate with crates.io
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        id: auth
+
+      - name: release-plz
+        uses: MarcoIeni/release-plz-action@e8792575c7f2366cf6ff3ccc33ead9ace5b691c7 # v0.5.130
+        id: release-plz
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Bump changelog versions
+        if: ${{ steps.release-plz.outputs.prs_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/bump-changelogs '${{ steps.release-plz.outputs.pr }}'
+
+      - name: Update release notes
+        if: ${{ steps.release-plz.outputs.releases_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/update-release-notes '${{ steps.release-plz.outputs.releases }}'
