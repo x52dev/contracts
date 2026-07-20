@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+- Update `syn` requirement to `3`.
+- Minimum supported Rust version (MSRV) is now 1.77.
+
 ## 0.6.7
 
 - Correctly handle return statement inside closures.
