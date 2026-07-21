@@ -55,12 +55,12 @@ fn gl_issue_17() {
     }
 }
 
+#[deny(unused_imports)]
 #[test]
 fn gl_issue_18() {
     use std::ops::{Div, Mul, Rem, Sub};
 
-    // use contracts::ensures; // <- unused warning
-    use contracts::requires;
+    use contracts::contract;
 
     trait Zero {
         fn zero() -> Self;
@@ -72,8 +72,10 @@ fn gl_issue_18() {
         }
     }
 
-    #[requires( n != T::zero() || d != T::zero() )]
-    #[ensures( ret != T::zero() && n % ret == T::zero() && d % ret == T::zero() )]
+    #[contract(
+        requires(n != T::zero() || d != T::zero()),
+        ensures(ret != T::zero() && n % ret == T::zero() && d % ret == T::zero()),
+    )]
     fn euclidean<T>(n: T, d: T) -> T
     where
         T: Sub<Output = T>

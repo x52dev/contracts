@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 pub(crate) mod codegen;
+pub(crate) mod contract;
 pub(crate) mod doc;
 pub(crate) mod ensures;
 pub(crate) mod invariant;
@@ -10,6 +11,7 @@ pub(crate) mod parse;
 pub(crate) mod requires;
 pub(crate) mod traits;
 
+pub(crate) use contract::contract;
 pub(crate) use ensures::ensures;
 pub(crate) use invariant::invariant;
 use proc_macro2::{Span, TokenStream};
@@ -157,17 +159,21 @@ impl FuncWithContracts {
     /// The initial contract is parsed from the tokens, others will be read from
     /// parsed function.
     pub(crate) fn new_with_initial_contract(
-        mut func: ItemFn,
+        func: ItemFn,
         cty: ContractType,
         cmode: ContractMode,
         ctoks: TokenStream,
     ) -> Self {
         // add in the first attribute
-        let mut contracts: Vec<Contract> = {
+        let contracts: Vec<Contract> = {
             let initial_contract = Contract::from_toks(cty, cmode, ctoks);
             vec![initial_contract]
         };
 
+        Self::new_with_contracts(func, contracts)
+    }
+
+    pub(crate) fn new_with_contracts(mut func: ItemFn, mut contracts: Vec<Contract>) -> Self {
         // find all other attributes
 
         let contract_attrs = func

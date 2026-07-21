@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+- Add a combined `#[contract(...)]` attribute for declaring multiple contracts.
+
 ## 0.6.8
 
 - Reject contract predicates that are the literal `false` at compile time.
