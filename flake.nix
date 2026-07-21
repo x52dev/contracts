@@ -20,7 +20,10 @@
           formatter = pkgs.nixpkgs-fmt;
 
           devShells.default = pkgs.mkShell {
-            buildInputs = [ x52just ];
+            buildInputs = [
+              x52just
+              inputs'.x52.packages.x52-release-tools
+            ];
 
             packages = [
               config.formatter
