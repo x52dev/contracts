@@ -42,7 +42,7 @@ jobs:
           extra-conf: lazy-trees = true
 
       - name: Set up FlakeHub Cache
-        uses: DeterminateSystems/flakehub-cache-action@3be0931021788e3bb4df65f59a555039c2fa2d46 # v3.21.7
+        uses: DeterminateSystems/flakehub-cache-action@77c6bddd7d747943530aaa578c57f233ee5d920e # v3.21.8
 
       - name: Install Rust (${{ matrix.toolchain.name }})
         uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
