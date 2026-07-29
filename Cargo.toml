@@ -1,6 +1,6 @@
 [package]
 name = "contracts"
-version = "0.6.8"
+version = "0.6.9"
 description = "Design-by-contract attributes"
 authors = ["karroffel <therzog@mail.de>"]
 categories = ["development-tools", "development-tools::procedural-macro-helpers"]
