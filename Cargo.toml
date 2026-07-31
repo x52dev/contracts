@@ -15,6 +15,10 @@ name = "contracts"
 path = "src/lib.rs"
 proc-macro = true
 
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+rustdoc-args = ["--cfg=docsrs", "--generate-link-to-definition"]
+
 [features]
 disable_contracts = []
 override_debug = []
