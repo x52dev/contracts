@@ -17,6 +17,15 @@
       perSystem = { pkgs, config, inputs', system, lib, ... }: {
           formatter = pkgs.nixpkgs-fmt;
 
+          devShells.ci = pkgs.mkShell {
+            packages = [ pkgs.just ];
+            shellHook = config.x52.justRust.shellHook;
+          };
+
+          devShells.ci-release = pkgs.mkShell {
+            packages = [ inputs'.x52.packages.x52-release-tools ];
+          };
+
           devShells.default = pkgs.mkShell {
             buildInputs = [
               inputs'.x52.packages.x52-release-tools
