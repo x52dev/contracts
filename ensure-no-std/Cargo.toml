@@ -1,0 +1,7 @@
+[package]
+name = "ensure-no-std"
+publish = false
+edition = "2018"
+
+[dependencies]
+contracts = { path = ".." }
