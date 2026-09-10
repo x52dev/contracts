@@ -43,15 +43,15 @@ test-no-coverage:
     RUSTDOCFLAGS="-D warnings" cargo {{ toolchain }} doc --workspace --no-deps --all-features
 
 # Test workspace and generate coverage files
-test: test-no-coverage build-no-std
+test: test-no-coverage build-no-alloc
     # @just test-coverage-codecov
     # @just test-coverage-lcov
 
 # Build a consumer without the standard library or an allocator.
-build-no-std:
-    cargo {{ toolchain }} build --target=thumbv6m-none-eabi --manifest-path=ensure-no-std/Cargo.toml
+build-no-alloc:
+    cargo {{ toolchain }} build --target=thumbv6m-none-eabi --manifest-path=ensure-no-alloc/Cargo.toml
     # Compile test-only contracts without the standard test harness.
-    cargo {{ toolchain }} rustc --target=thumbv6m-none-eabi --manifest-path=ensure-no-std/Cargo.toml -- --cfg test
+    cargo {{ toolchain }} rustc --target=thumbv6m-none-eabi --manifest-path=ensure-no-alloc/Cargo.toml -- --cfg test
 
 # Test workspace using MSRV
 test-msrv: downgrade-for-msrv test

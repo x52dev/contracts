@@ -65,6 +65,6 @@ jobs:
       - name: Test
         run: just test-no-coverage
 
-      - name: Build (no-std)
+      - name: Build (no-std, no-alloc)
         if: matrix.toolchain.name == 'stable'
-        run: just build-no-std
+        run: just build-no-alloc

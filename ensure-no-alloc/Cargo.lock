@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ensure-no-std"
+name = "ensure-no-alloc"
 version = "0.0.0"
 dependencies = [
  "contracts",

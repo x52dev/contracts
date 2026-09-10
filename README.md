@@ -26,7 +26,7 @@ Annotate functions and methods with "contracts", using _invariants_, _pre-condit
 
 Contracts support `#![no_std]` consumers without an allocator. No feature flag is required. The procedural macro runs on the build host and uses `std` there; the generated checks do not. Contract expressions must also be compatible with `no_std`. Logging and MIRAI modes depend on the consumer's logging or MIRAI setup and are not covered by this guarantee.
 
-CI builds the `ensure-no-std` consumer for `thumbv6m-none-eabi`, with `just build-no-std`.
+CI builds the `ensure-no-alloc` consumer for `thumbv6m-none-eabi`, with `just build-no-alloc`.
 
 ## Example
 

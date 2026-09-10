@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+// Do not add a global allocator: the build must fail if generated contracts require one.
 mod compat_test;
 
 #[panic_handler]
