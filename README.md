@@ -13,6 +13,7 @@
 [![codecov](https://codecov.io/gh/x52dev/contracts/graph/badge.svg?token=OpYe6I7dj5)](https://codecov.io/gh/x52dev/contracts-rs)
 ![Version](https://img.shields.io/crates/msrv/contracts.svg)
 [![Download](https://img.shields.io/crates/d/contracts.svg)](https://crates.io/crates/contracts)
+[![Chat on Discord](https://img.shields.io/discord/1554698838651179088?label=chat&logo=discord)](https://discord.gg/pnDxDM9NBp)
 
 <!-- prettier-ignore-end -->
 
