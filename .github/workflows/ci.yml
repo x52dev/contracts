@@ -17,7 +17,7 @@ concurrency:
 jobs:
   read_msrv:
     name: Read MSRV
-    uses: actions-rust-lang/msrv/.github/workflows/msrv.yml@2e4effc4a4a9437253f7f659990d4ac5ec9c7854 # main
+    uses: actions-rust-lang/msrv/.github/workflows/msrv.yml@d3d2883c667da4f83d8af52be9f236ea3fcdd82c # v0.1.3
 
   test:
     needs: read_msrv
@@ -34,7 +34,8 @@ jobs:
     name: Test / ${{ matrix.toolchain.name }}
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
