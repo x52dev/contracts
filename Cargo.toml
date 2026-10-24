@@ -32,4 +32,4 @@ syn = { version = "3", features = ["extra-traits", "full", "visit", "visit-mut"]
 
 [dev-dependencies]
 rustversion-msrv = "0.100"
-trybuild = "=1.0.85"
+trybuild = "=1.0.116"
