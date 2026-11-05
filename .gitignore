@@ -1,5 +1,6 @@
 # rust
 /target/
+/ensure-no-alloc/target/
 **/*.rs.bk
 
 # direnv
